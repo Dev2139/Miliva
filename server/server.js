@@ -30,8 +30,23 @@ const app = express();
 
 // Security & Body parser middleware
 app.use(helmet({ contentSecurityPolicy: false }));
+const allowedOrigins = [
+  'https://bemiliva.netlify.app',
+  'https://bemiliva-admin.netlify.app',
+  'http://localhost:5173',
+  'http://localhost:5175',
+  process.env.CLIENT_URL,
+  process.env.ADMIN_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.netlify.app') || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
