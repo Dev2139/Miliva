@@ -41,6 +41,15 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsPath = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsPath));
 
+// Welcome & API Status Endpoints
+app.get('/', (req, res) => {
+  res.json({ success: true, message: 'Miliva Cosmetics Backend API is running smoothly' });
+});
+
+app.get('/api', (req, res) => {
+  res.json({ success: true, message: 'Miliva Cosmetics API Server', health: '/api/health' });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -75,3 +84,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Miliva Backend Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });
+
+export default app;
+
