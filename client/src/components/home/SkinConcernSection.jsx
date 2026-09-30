@@ -7,7 +7,7 @@ const CONCERNS = [
     title: 'Acne & Blemishes',
     concern: 'Acne',
     desc: 'Target active breakouts, clogged pores and sebum with Salicylic Acid & Niacinamide.',
-    image: 'https://images.unsplash.com/photo-1608248597266-70e6371cf786?q=80&w=600&auto=format&fit=crop'
+    image: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=600&auto=format&fit=crop'
   },
   {
     title: 'Dark Spots & Pigmentation',
