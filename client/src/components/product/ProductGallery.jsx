@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { FiPlayCircle, FiImage } from 'react-icons/fi';
+import { FiPlayCircle } from 'react-icons/fi';
+
+const isDirectVideoUrl = (url) => {
+  if (!url) return false;
+  const u = url.toLowerCase();
+  // YouTube or Vimeo embed check
+  if (u.includes('youtube.com') || u.includes('youtu.be') || u.includes('vimeo.com')) {
+    return false;
+  }
+  return true;
+};
 
 const ProductGallery = ({ images = [], videoUrl = '', name = "" }) => {
   const defaultImages = images.length > 0 
@@ -9,8 +19,9 @@ const ProductGallery = ({ images = [], videoUrl = '', name = "" }) => {
   // Media list combining images and video (if present)
   const mediaList = defaultImages.map((imgUrl, i) => ({ type: 'image', url: imgUrl, id: `img-${i}` }));
   
-  if (videoUrl) {
-    mediaList.push({ type: 'video', url: videoUrl, id: 'video-main' });
+  if (videoUrl && typeof videoUrl === 'string' && videoUrl.trim() !== '') {
+    // Put video right after primary image or at end
+    mediaList.splice(1, 0, { type: 'video', url: videoUrl.trim(), id: 'video-main' });
   }
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -26,17 +37,22 @@ const ProductGallery = ({ images = [], videoUrl = '', name = "" }) => {
             <button
               key={item.id}
               onClick={() => setSelectedIndex(idx)}
-              className={`w-16 h-16 border transition-all flex-shrink-0 bg-neutral-50 overflow-hidden relative ${
-                selectedIndex === idx ? 'border-neutral-900 ring-2 ring-neutral-900' : 'border-neutral-200 opacity-70 hover:opacity-100'
+              className={`w-16 h-16 border transition-all flex-shrink-0 bg-neutral-900 overflow-hidden relative ${
+                selectedIndex === idx ? 'border-neutral-900 ring-2 ring-neutral-900 opacity-100' : 'border-neutral-200 opacity-70 hover:opacity-100'
               }`}
             >
               {item.type === 'video' ? (
-                <div className="w-full h-full bg-neutral-900 text-white flex flex-col items-center justify-center p-1">
-                  <FiPlayCircle className="w-6 h-6 text-emerald-400" />
-                  <span className="text-[9px] font-bold tracking-wider uppercase mt-0.5">Video</span>
+                <div className="w-full h-full bg-neutral-900 text-white flex flex-col items-center justify-center p-1 relative">
+                  {isDirectVideoUrl(item.url) ? (
+                    <video src={item.url} className="w-full h-full object-cover opacity-50 pointer-events-none" />
+                  ) : null}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40">
+                    <FiPlayCircle className="w-6 h-6 text-emerald-400 drop-shadow-md animate-pulse" />
+                    <span className="text-[9px] font-bold tracking-wider uppercase mt-0.5 text-white">Video</span>
+                  </div>
                 </div>
               ) : (
-                <img src={item.url} alt={`${name} thumbnail ${idx}`} className="w-full h-full object-contain p-1" />
+                <img src={item.url} alt={`${name} thumbnail ${idx}`} className="w-full h-full object-contain p-1 bg-white" />
               )}
             </button>
           ))}
@@ -47,11 +63,13 @@ const ProductGallery = ({ images = [], videoUrl = '', name = "" }) => {
       <div className="flex-1 aspect-square bg-[#F7F3ED] border border-neutral-200 overflow-hidden relative group rounded-lg">
         {currentMedia.type === 'video' ? (
           <div className="w-full h-full bg-black flex items-center justify-center relative">
-            {currentMedia.url.endsWith('.mp4') || currentMedia.url.endsWith('.webm') || currentMedia.url.startsWith('/videos') ? (
+            {isDirectVideoUrl(currentMedia.url) ? (
               <video
                 src={currentMedia.url}
                 controls
                 autoPlay
+                playsInline
+                preload="metadata"
                 className="w-full h-full object-contain"
               />
             ) : (
