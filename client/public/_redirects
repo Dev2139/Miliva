@@ -1,3 +1,7 @@
+# Proxy backend API requests to Vercel production backend
+/api/*  https://miliva.vercel.app/api/:splat  200
+/uploads/*  https://miliva.vercel.app/uploads/:splat  200
+
 # Proxy product share preview link to Vercel backend so WhatsApp, Facebook, iMessage crawlers see OpenGraph image meta tags
 /p/:slug  https://miliva.vercel.app/p/:slug  200
 

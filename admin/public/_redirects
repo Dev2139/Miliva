@@ -1,2 +1,6 @@
+# Proxy backend API requests to Vercel production backend
 /api/*  https://miliva.vercel.app/api/:splat  200
-/*      /index.html                           200
+/uploads/*  https://miliva.vercel.app/uploads/:splat  200
+
+# Admin Single Page Application Fallback
+/*  /index.html  200
