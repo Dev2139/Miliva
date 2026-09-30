@@ -14,12 +14,12 @@ export default defineConfig({
     port: 5175,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://miliva.vercel.app',
         changeOrigin: true,
         secure: false
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: 'https://miliva.vercel.app',
         changeOrigin: true
       }
     }

@@ -19,7 +19,7 @@ export default defineConfig({
         secure: false
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: 'https://miliva.vercel.app',
         changeOrigin: true
       }
     }

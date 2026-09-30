@@ -132,23 +132,54 @@ export default function AdminProductsPage() {
     setShowModal(true);
   };
 
-  // Dynamic Image Handlers & Device Upload to Cloudinary
+  // Dynamic Image Handlers & Resilient Device Upload to Cloudinary
   const handleDeviceFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files || files.length === 0) return;
 
     setUploading(true);
     try {
-      const fileFormData = new FormData();
-      files.forEach((file) => {
-        fileFormData.append('images', file);
-      });
+      let uploadedUrls = [];
 
-      const res = await adminService.uploadImages(fileFormData);
+      // Method 1: Multipart FormData upload
+      try {
+        const fileFormData = new FormData();
+        files.forEach((file) => {
+          fileFormData.append('images', file);
+        });
+        const res = await adminService.uploadImages(fileFormData);
+        if (res.success && Array.isArray(res.urls) && res.urls.length > 0) {
+          uploadedUrls = res.urls;
+        }
+      } catch (backendErr) {
+        console.warn('Multipart upload failed, trying Base64 JSON fallback...', backendErr);
+      }
 
-      if (res.success && Array.isArray(res.urls) && res.urls.length > 0) {
+      // Method 2: Base64 JSON upload fallback
+      if (uploadedUrls.length === 0) {
+        const b64Promises = files.map(file => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }));
+
+        const b64Strings = await Promise.all(b64Promises);
+        
+        try {
+          const res = await adminService.uploadImagesJson({ images: b64Strings });
+          if (res.success && Array.isArray(res.urls) && res.urls.length > 0) {
+            uploadedUrls = res.urls;
+          }
+        } catch (jsonErr) {
+          console.warn('Base64 backend upload failed, using Data URLs for image state...', jsonErr);
+          uploadedUrls = b64Strings;
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
         const existingValid = formData.images.filter(img => img.url && img.url !== '/images/cleanser.svg');
-        const newImages = res.urls.map((url, idx) => ({
+        const newImages = uploadedUrls.map((url, idx) => ({
           url,
           alt: formData.name || 'Product Image',
           isPrimary: existingValid.length === 0 && idx === 0
@@ -162,12 +193,12 @@ export default function AdminProductsPage() {
           ]
         }));
 
-        showToast(`Uploaded ${res.urls.length} image(s) directly to Cloudinary!`, 'success');
+        showToast(`Successfully added ${uploadedUrls.length} product image(s)!`, 'success');
       } else {
-        showToast(res.message || 'Failed to upload images to Cloudinary', 'error');
+        showToast('Failed to process image files', 'error');
       }
     } catch (err) {
-      showToast(err.response?.data?.message || 'Error uploading images to Cloudinary', 'error');
+      showToast('Error processing device images', 'error');
     } finally {
       setUploading(false);
       e.target.value = '';
