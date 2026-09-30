@@ -22,6 +22,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const { showToast } = useAdminToast();
 
@@ -131,25 +132,54 @@ export default function AdminProductsPage() {
     setShowModal(true);
   };
 
-  // Dynamic Image Handlers
-  const handleAddImage = () => {
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, { url: '', alt: prev.name || 'MILIVA Product Image', isPrimary: prev.images.length === 0 }]
-    }));
+  // Dynamic Image Handlers & Device Upload to Cloudinary
+  const handleDeviceFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const fileFormData = new FormData();
+      files.forEach((file) => {
+        fileFormData.append('images', file);
+      });
+
+      const res = await adminService.uploadImages(fileFormData);
+
+      if (res.success && Array.isArray(res.urls) && res.urls.length > 0) {
+        const existingValid = formData.images.filter(img => img.url && img.url !== '/images/cleanser.svg');
+        const newImages = res.urls.map((url, idx) => ({
+          url,
+          alt: formData.name || 'Product Image',
+          isPrimary: existingValid.length === 0 && idx === 0
+        }));
+
+        setFormData(prev => ({
+          ...prev,
+          images: [
+            ...prev.images.filter(img => img.url && img.url !== '/images/cleanser.svg'),
+            ...newImages
+          ]
+        }));
+
+        showToast(`Uploaded ${res.urls.length} image(s) directly to Cloudinary!`, 'success');
+      } else {
+        showToast(res.message || 'Failed to upload images to Cloudinary', 'error');
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Error uploading images to Cloudinary', 'error');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleRemoveImage = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleImageChange = (index, field, value) => {
     setFormData(prev => {
-      const updated = [...prev.images];
-      updated[index] = { ...updated[index], [field]: value };
+      const updated = prev.images.filter((_, i) => i !== index);
+      if (updated.length > 0 && !updated.some(img => img.isPrimary)) {
+        updated[0].isPrimary = true;
+      }
       return { ...prev, images: updated };
     });
   };
@@ -190,8 +220,15 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Format Cloudinary images for MongoDB (primary image first)
+      const validImages = (formData.images || [])
+        .filter(img => img.url && typeof img.url === 'string' && img.url.trim() !== '')
+        .sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
+        .map(img => img.url);
+
       const payload = {
         ...formData,
+        images: validImages.length > 0 ? validImages : ['/images/cleanser.svg'],
         ingredients: typeof formData.ingredients === 'string' 
           ? formData.ingredients.split(',').map(s => s.trim()).filter(Boolean)
           : formData.ingredients,
@@ -204,12 +241,12 @@ export default function AdminProductsPage() {
       if (editingId) {
         const res = await adminService.updateProduct(editingId, payload);
         if (res.success) {
-          showToast('Product updated successfully', 'success');
+          showToast('Product updated successfully with Cloudinary images', 'success');
         }
       } else {
         const res = await adminService.createProduct(payload);
         if (res.success) {
-          showToast('Product created successfully', 'success');
+          showToast('Product created successfully with Cloudinary images', 'success');
         }
       }
       setShowModal(false);
@@ -466,79 +503,105 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* MULTIPLE IMAGES SECTION */}
-              <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-white flex items-center">
-                      <FiImage className="w-4 h-4 mr-2 text-emerald-400" />
-                      Multiple Product Images Gallery
-                    </h4>
-                    <p className="text-xs text-neutral-400">Add multiple high-res product photos, texture close-ups & lifestyle shots</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddImage}
-                    className="flex items-center space-x-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition-colors"
-                  >
-                    <FiPlus className="w-3.5 h-3.5" />
-                    <span>Add Image URL</span>
-                  </button>
+              {/* MULTIPLE IMAGES DIRECT DEVICE UPLOAD TO CLOUDINARY */}
+              <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 space-y-4">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center">
+                    <FiImage className="w-4 h-4 mr-2 text-emerald-400" />
+                    Product Images (Direct Device Upload to Cloudinary)
+                  </h4>
+                  <p className="text-xs text-neutral-400">
+                    Upload multiple high-res product photos from your local device. Images are uploaded to Cloudinary and saved directly to the database.
+                  </p>
                 </div>
 
+                {/* File Dropzone Input */}
+                <div className="border-2 border-dashed border-neutral-800 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition-colors relative bg-neutral-900/50">
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleDeviceFileUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    disabled={uploading}
+                  />
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    {uploading ? (
+                      <>
+                        <FiRefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+                        <p className="text-sm font-bold text-emerald-400">Uploading to Cloudinary...</p>
+                        <p className="text-xs text-neutral-400">Uploading device files and storing Cloudinary URLs</p>
+                      </>
+                    ) : (
+                      <>
+                        <FiUploadCloud className="w-8 h-8 text-emerald-400" />
+                        <p className="text-sm font-bold text-white">
+                          Click or Drag & Drop Images from Device
+                        </p>
+                        <p className="text-xs text-neutral-400">
+                          Select multiple image files (PNG, JPG, WEBP). Images will upload straight to Cloudinary.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Uploaded Images List */}
                 <div className="space-y-3 pt-2">
-                  {formData.images.map((img, idx) => (
-                    <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-neutral-900 border border-neutral-800 rounded-xl">
-                      {/* Image Preview */}
-                      <img
-                        src={img.url || '/images/cleanser.svg'}
-                        alt={img.alt || 'Preview'}
-                        className="w-12 h-12 rounded-lg object-contain bg-neutral-950 p-1 border border-neutral-800 shrink-0"
-                      />
+                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider block">
+                    Uploaded Product Gallery ({formData.images.filter(i => i.url && i.url !== '/images/cleanser.svg').length} images)
+                  </span>
 
-                      {/* Image URL Input */}
-                      <input
-                        type="text"
-                        placeholder="Image URL (e.g. /images/cleanser.svg or https://...)"
-                        value={img.url}
-                        onChange={(e) => handleImageChange(idx, 'url', e.target.value)}
-                        className="flex-1 w-full bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
-                      />
-
-                      {/* Alt text input */}
-                      <input
-                        type="text"
-                        placeholder="Alt text"
-                        value={img.alt}
-                        onChange={(e) => handleImageChange(idx, 'alt', e.target.value)}
-                        className="w-full sm:w-36 bg-neutral-950 border border-neutral-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
-                      />
-
-                      {/* Primary Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => handleSetPrimaryImage(idx)}
-                        className={`text-xs px-2.5 py-1.5 rounded-lg font-semibold shrink-0 transition-colors ${
-                          img.isPrimary 
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
-                            : 'bg-neutral-800 text-neutral-400 hover:text-white'
-                        }`}
-                      >
-                        {img.isPrimary ? 'Primary Image' : 'Set Primary'}
-                      </button>
-
-                      {/* Delete Image button */}
-                      {formData.images.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(idx)}
-                          className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 shrink-0"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                  {formData.images.filter(img => img.url && img.url !== '/images/cleanser.svg').length === 0 ? (
+                    <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl text-center text-xs text-neutral-500">
+                      No images uploaded yet. Select files above from your device.
                     </div>
-                  ))}
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {formData.images.filter(img => img.url && img.url !== '/images/cleanser.svg').map((img, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-neutral-900 border border-neutral-800 rounded-xl">
+                          {/* Image Preview */}
+                          <img
+                            src={img.url}
+                            alt={img.alt || 'Product Image'}
+                            className="w-14 h-14 rounded-lg object-cover bg-neutral-950 border border-neutral-800 shrink-0"
+                          />
+
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-block">
+                              Cloudinary Image
+                            </span>
+                            <p className="text-xs text-neutral-400 truncate font-mono">{img.url}</p>
+                          </div>
+
+                          <div className="flex items-center space-x-2 shrink-0">
+                            {/* Primary Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleSetPrimaryImage(idx)}
+                              className={`text-[11px] px-2.5 py-1.5 rounded-lg font-semibold transition-colors ${
+                                img.isPrimary 
+                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
+                                  : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                              }`}
+                            >
+                              {img.isPrimary ? 'Primary Image' : 'Set Primary'}
+                            </button>
+
+                            {/* Delete Image button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImage(idx)}
+                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10"
+                              title="Delete Image"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

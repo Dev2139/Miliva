@@ -110,6 +110,13 @@ export const adminService = {
     return res.data;
   },
 
+  uploadImages: async (fileFormData) => {
+    const res = await API.post('/upload', fileFormData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  },
+
   logout: () => {
     localStorage.removeItem('miliva_admin_token');
     localStorage.removeItem('miliva_admin_user');

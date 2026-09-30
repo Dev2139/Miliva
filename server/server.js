@@ -20,6 +20,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import bundleRoutes from './routes/bundleRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 dotenv.config();
 
@@ -78,6 +79,7 @@ app.use('/api/products/:id/reviews', reviewRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/bundles', bundleRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Delivery Pincode checker route
 app.get('/api/pincode/:code', (req, res) => {
