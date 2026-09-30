@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiShoppingBag } from 'react-icons/fi';
+import { FiShoppingBag, FiShare2 } from 'react-icons/fi';
 import PriceDisplay from '../common/PriceDisplay';
 import RatingStars from '../common/RatingStars';
 import WishlistButton from '../common/WishlistButton';
 import Badge from '../common/Badge';
+import ProductShareModal from './ProductShareModal';
 import { useCart } from '../../context/CartContext';
 
 const ProductCard = ({ product }) => {
+  const [showShareModal, setShowShareModal] = useState(false);
   const { addToCart } = useCart();
 
   if (!product) return null;
@@ -34,9 +36,17 @@ const ProductCard = ({ product }) => {
             {product.isNew && <Badge type="new" />}
           </div>
 
-          {/* Wishlist Button Top Right */}
-          <div className="absolute top-3 right-3 z-10">
+          {/* Wishlist & Share Buttons Top Right */}
+          <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5">
             <WishlistButton product={product} />
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs shadow-md flex items-center justify-center text-neutral-700 hover:text-black hover:bg-white transition-all"
+              title="Share product with image & link"
+              aria-label="Share product"
+            >
+              <FiShare2 className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Quick Add Overlay Button on Desktop */}
@@ -93,6 +103,12 @@ const ProductCard = ({ product }) => {
           <FiShoppingBag className="w-4 h-4" />
         </button>
       </div>
+
+      <ProductShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        product={product}
+      />
     </div>
   );
 };

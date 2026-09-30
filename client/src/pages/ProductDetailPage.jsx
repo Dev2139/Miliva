@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FiShoppingBag, FiHeart, FiCheck, FiShield, FiTruck, FiChevronDown, FiChevronUp, FiBox } from 'react-icons/fi';
+import { FiShoppingBag, FiHeart, FiShare2, FiCheck, FiShield, FiTruck, FiChevronDown, FiChevronUp, FiBox } from 'react-icons/fi';
 import ProductGallery from '../components/product/ProductGallery';
 import PriceDisplay from '../components/common/PriceDisplay';
 import RatingStars from '../components/common/RatingStars';
@@ -8,6 +8,8 @@ import QuantitySelector from '../components/common/QuantitySelector';
 import PincodeChecker from '../components/product/PincodeChecker';
 import ProductReviewsSection from '../components/product/ProductReviewsSection';
 import ProductGrid from '../components/product/ProductGrid';
+import ProductShareModal from '../components/product/ProductShareModal';
+import { setProductMetaTags } from '../utils/updateMetaTags';
 import { productService } from '../services/productService';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -21,6 +23,7 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Accordion toggle states
   const [openAccordion, setOpenAccordion] = useState('ingredients');
@@ -36,6 +39,7 @@ const ProductDetailPage = () => {
         const res = await productService.getProductBySlug(slug);
         if (res.product) {
           setProduct(res.product);
+          setProductMetaTags(res.product);
           // Set initial default variant
           if (res.product.variants && res.product.variants.length > 0) {
             setSelectedVariant(res.product.variants[0]);
@@ -217,18 +221,38 @@ const ProductDetailPage = () => {
                   inWishlist ? 'border-red-500 bg-red-50 text-red-500' : 'border-neutral-300 text-neutral-700 hover:border-neutral-900'
                 }`}
                 aria-label="Wishlist"
+                title="Add to Wishlist"
               >
                 <FiHeart className="w-5 h-5" />
               </button>
+
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="p-3.5 border border-neutral-300 text-neutral-800 hover:border-neutral-900 hover:bg-cream transition-all flex items-center justify-center"
+                aria-label="Share product"
+                title="Share product directly with image and link"
+              >
+                <FiShare2 className="w-5 h-5" />
+              </button>
             </div>
 
-            <button
-              onClick={handleBuyNow}
-              disabled={isOutOfStock}
-              className="w-full py-3.5 bg-cream text-neutral-900 border border-neutral-900 text-xs uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors"
-            >
-              Buy Now &bull; Instant Checkout
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={handleBuyNow}
+                disabled={isOutOfStock}
+                className="w-full py-3.5 bg-cream text-neutral-900 border border-neutral-900 text-xs uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors"
+              >
+                Buy Now &bull; Instant Checkout
+              </button>
+
+              <button
+                onClick={() => setShowShareModal(true)}
+                className="w-full py-3.5 bg-emerald-50 text-emerald-950 border border-emerald-300 hover:border-emerald-600 text-xs uppercase font-bold tracking-widest flex items-center justify-center gap-2 transition-colors"
+              >
+                <FiShare2 className="w-4 h-4 text-emerald-700" />
+                <span>Share with Friends</span>
+              </button>
+            </div>
           </div>
 
           {/* Pincode Checker */}
@@ -320,6 +344,13 @@ const ProductDetailPage = () => {
           <ProductGrid products={relatedProducts} columns={3} />
         </div>
       )}
+
+      {/* Share Product Modal */}
+      <ProductShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        product={product}
+      />
     </div>
   );
 };
