@@ -211,22 +211,51 @@ export default function AdminProductsPage() {
         }
 
         // Method B: Base64 JSON upload fallback
-        if (!url) {
-          try {
-            const b64 = await new Promise((res, rej) => {
-              const r = new FileReader();
-              r.onload = () => res(r.result);
-              r.onerror = rej;
-              r.readAsDataURL(file);
-            });
+        let b64DataUrl = null;
+        try {
+          b64DataUrl = await new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result);
+            r.onerror = rej;
+            r.readAsDataURL(file);
+          });
+        } catch (rErr) {
+          console.warn('FileReader error:', rErr);
+        }
 
-            const res = await adminService.uploadImagesJson({ images: [b64] });
+        if (!url && b64DataUrl) {
+          try {
+            const res = await adminService.uploadImagesJson({ images: [b64DataUrl] });
             if (res.success && Array.isArray(res.urls) && res.urls[0]) {
               url = res.urls[0];
             }
           } catch (b64Err) {
-            console.warn('Base64 upload failed:', b64Err);
+            console.warn('Base64 backend upload failed:', b64Err);
           }
+        }
+
+        // Method C: Direct Cloudinary Unsigned Upload
+        if (!url && b64DataUrl) {
+          try {
+            const cloudFd = new FormData();
+            cloudFd.append('file', b64DataUrl);
+            cloudFd.append('upload_preset', 'ml_default');
+            const cRes = await fetch('https://api.cloudinary.com/v1_1/urzka7oz/image/upload', {
+              method: 'POST',
+              body: cloudFd
+            });
+            const cData = await cRes.json();
+            if (cData.secure_url) {
+              url = cData.secure_url;
+            }
+          } catch (cErr) {
+            console.warn('Direct Cloudinary upload error:', cErr);
+          }
+        }
+
+        // Final Fallback: Use compressed Data URL (~120KB) so image preview & saving never fails!
+        if (!url && b64DataUrl) {
+          url = b64DataUrl;
         }
 
         if (url) {

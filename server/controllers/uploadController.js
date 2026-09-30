@@ -71,10 +71,11 @@ export const uploadProductImages = async (req, res) => {
       urls: uploadedUrls
     });
   } catch (error) {
-    console.error('Cloudinary Upload Error:', error);
+    console.error('Cloudinary Upload Controller Exception:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Failed to upload images to Cloudinary'
+      message: error?.message || (typeof error === 'string' ? error : 'Failed to upload images to Cloudinary'),
+      error: error
     });
   }
 };
