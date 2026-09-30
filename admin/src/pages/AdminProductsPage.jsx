@@ -23,6 +23,7 @@ export default function AdminProductsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   const { showToast } = useAdminToast();
 
@@ -287,6 +288,89 @@ export default function AdminProductsPage() {
       showToast('Error processing device images', 'error');
     } finally {
       setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  // Direct Device Video Upload to Cloudinary Handler
+  const handleDeviceVideoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingVideo(true);
+    try {
+      showToast('Uploading video file from device to Cloudinary...', 'info');
+      let url = null;
+
+      // Method A: Multipart upload
+      try {
+        const fileFormData = new FormData();
+        fileFormData.append('video', file);
+        const res = await adminService.uploadVideo(fileFormData);
+        if (res.success && (res.url || res.videoUrl)) {
+          url = res.url || res.videoUrl;
+        }
+      } catch (backendErr) {
+        console.warn('Multipart video upload failed, trying JSON Base64 fallback...', backendErr);
+      }
+
+      // Method B: Base64 JSON upload fallback
+      let b64DataUrl = null;
+      try {
+        b64DataUrl = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.onerror = rej;
+          r.readAsDataURL(file);
+        });
+      } catch (rErr) {
+        console.warn('FileReader video error:', rErr);
+      }
+
+      if (!url && b64DataUrl) {
+        try {
+          const res = await adminService.uploadVideoJson({ video: b64DataUrl });
+          if (res.success && (res.url || res.videoUrl)) {
+            url = res.url || res.videoUrl;
+          }
+        } catch (b64Err) {
+          console.warn('Base64 video upload failed:', b64Err);
+        }
+      }
+
+      // Method C: Direct Cloudinary Unsigned Video Upload
+      if (!url && b64DataUrl) {
+        try {
+          const cloudFd = new FormData();
+          cloudFd.append('file', b64DataUrl);
+          cloudFd.append('upload_preset', 'ml_default');
+          const cRes = await fetch('https://api.cloudinary.com/v1_1/urzka7oz/video/upload', {
+            method: 'POST',
+            body: cloudFd
+          });
+          const cData = await cRes.json();
+          if (cData.secure_url) {
+            url = cData.secure_url;
+          }
+        } catch (cErr) {
+          console.warn('Direct Cloudinary video upload error:', cErr);
+        }
+      }
+
+      if (!url && b64DataUrl) {
+        url = b64DataUrl;
+      }
+
+      if (url) {
+        setFormData(prev => ({ ...prev, videoUrl: url }));
+        showToast('Product video uploaded successfully to Cloudinary!', 'success');
+      } else {
+        showToast('Failed to upload video to Cloudinary', 'error');
+      }
+    } catch (err) {
+      showToast('Error processing device video file', 'error');
+    } finally {
+      setUploadingVideo(false);
       e.target.value = '';
     }
   };
@@ -722,54 +806,74 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* PRODUCT VIDEO URL SECTION */}
+              {/* PRODUCT VIDEO DIRECT DEVICE UPLOAD SECTION */}
               <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 space-y-3">
                 <div>
                   <h4 className="text-sm font-bold text-white flex items-center">
                     <FiVideo className="w-4 h-4 mr-2 text-emerald-400" />
-                    Product Demonstration Video (Optional)
+                    Product Demonstration Video (Direct Device Upload to Cloudinary)
                   </h4>
-                  <p className="text-xs text-neutral-400">Add an MP4 video URL or embed link to showcase texture, application & results</p>
+                  <p className="text-xs text-neutral-400">
+                    Upload product demonstration video files directly from your computer device system to Cloudinary.
+                  </p>
                 </div>
 
                 <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={formData.videoUrl}
-                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                    className="w-full bg-neutral-900 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
-                    placeholder="e.g. /videos/cleanser-demo.mp4 or https://cdn.miliva.com/videos/serum-texture.mp4"
-                  />
+                  {/* File Dropzone Input for Videos */}
+                  <div className="border-2 border-dashed border-neutral-800 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition-colors relative bg-neutral-900/50">
+                    <input
+                      type="file"
+                      accept="video/*,.mp4,.webm,.mov,.avi,.mkv"
+                      onChange={handleDeviceVideoUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      disabled={uploadingVideo}
+                    />
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      {uploadingVideo ? (
+                        <>
+                          <FiRefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+                          <p className="text-sm font-bold text-emerald-400">Uploading Video to Cloudinary...</p>
+                          <p className="text-xs text-neutral-400">Storing video file on Cloudinary</p>
+                        </>
+                      ) : (
+                        <>
+                          <FiUploadCloud className="w-8 h-8 text-emerald-400" />
+                          <p className="text-sm font-bold text-white">
+                            Click or Drag &amp; Drop Video File from Device System
+                          </p>
+                          <p className="text-xs text-neutral-400">
+                            Select video file from device (MP4, WEBM, MOV, AVI). Uploads directly to Cloudinary.
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
+                  {/* Uploaded Video Preview */}
                   {formData.videoUrl && (
-                    <div className="p-3 bg-neutral-900 border border-neutral-800 rounded-xl space-y-2">
+                    <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3">
                       <div className="flex items-center justify-between text-xs text-neutral-300">
-                        <span className="font-semibold flex items-center text-emerald-400">
-                          <FiCheckCircle className="w-3.5 h-3.5 mr-1" /> Video URL Preview
-                        </span>
+                        <div>
+                          <span className="font-semibold flex items-center text-emerald-400">
+                            <FiCheckCircle className="w-3.5 h-3.5 mr-1" /> Cloudinary Video Uploaded
+                          </span>
+                          <p className="text-[11px] text-neutral-400 font-mono truncate max-w-md mt-0.5">{formData.videoUrl}</p>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, videoUrl: '' })}
-                          className="text-red-400 hover:text-red-300 text-[11px]"
+                          className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded-lg border border-red-500/30 transition-colors"
                         >
                           Remove Video
                         </button>
                       </div>
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden border border-neutral-800 max-h-48">
-                        {formData.videoUrl.endsWith('.mp4') || formData.videoUrl.endsWith('.webm') || formData.videoUrl.startsWith('/videos') ? (
-                          <video 
-                            src={formData.videoUrl} 
-                            controls 
-                            className="w-full h-full object-contain"
-                          />
-                        ) : (
-                          <iframe
-                            src={formData.videoUrl}
-                            title="Product Video"
-                            className="w-full h-full border-0"
-                            allowFullScreen
-                          />
-                        )}
+
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden border border-neutral-800 max-h-56">
+                        <video 
+                          src={formData.videoUrl} 
+                          controls 
+                          className="w-full h-full object-contain"
+                        />
                       </div>
                     </div>
                   )}

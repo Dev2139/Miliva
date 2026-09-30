@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { uploadProductImages } from '../controllers/uploadController.js';
+import { uploadProductImages, uploadVideo } from '../controllers/uploadController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -9,17 +9,20 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per file
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max per file for high-res images and videos
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed!'), false);
+      cb(new Error('Only image and video files are allowed!'), false);
     }
   }
 });
 
-// POST /api/upload - Accepts up to 10 product images
+// POST /api/upload - Accepts product images and videos
 router.post('/', upload.array('images', 10), uploadProductImages);
+
+// POST /api/upload/video - Accepts product video
+router.post('/video', upload.single('video'), uploadVideo);
 
 export default router;
