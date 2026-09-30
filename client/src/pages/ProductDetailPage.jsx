@@ -236,23 +236,13 @@ const ProductDetailPage = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={handleBuyNow}
-                disabled={isOutOfStock}
-                className="w-full py-3.5 bg-cream text-neutral-900 border border-neutral-900 text-xs uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors"
-              >
-                Buy Now &bull; Instant Checkout
-              </button>
-
-              <button
-                onClick={() => setShowShareModal(true)}
-                className="w-full py-3.5 bg-emerald-50 text-emerald-950 border border-emerald-300 hover:border-emerald-600 text-xs uppercase font-bold tracking-widest flex items-center justify-center gap-2 transition-colors"
-              >
-                <FiShare2 className="w-4 h-4 text-emerald-700" />
-                <span>Share with Friends</span>
-              </button>
-            </div>
+            <button
+              onClick={handleBuyNow}
+              disabled={isOutOfStock}
+              className="w-full py-3.5 bg-cream text-neutral-900 border border-neutral-900 text-xs uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors"
+            >
+              Buy Now &bull; Instant Checkout
+            </button>
           </div>
 
           {/* Pincode Checker */}
