@@ -59,8 +59,8 @@ const HeroSection = () => {
         <div className="lg:col-span-6 relative">
           <div className="relative aspect-4/5 max-w-md mx-auto lg:max-w-none border border-subtle shadow-xs bg-white overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1000&auto=format&fit=crop"
-              alt="Miliva Skincare Hero Bottles"
+              src="https://res.cloudinary.com/urzka7oz/image/upload/v1790699638/ChatGPT_Image_Sep_29_2026_12_01_38_PM.png"
+              alt="Miliva Skincare Hero Products"
               className="w-full h-full object-cover object-center"
             />
 

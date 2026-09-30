@@ -48,18 +48,6 @@ const MobileDrawer = ({ isOpen, onClose, onOpenSearch }) => {
 
           {/* Nav links */}
           <div className="py-2 divide-y divide-subtle">
-            <button onClick={() => handleNav('/product/miliva-face-cleanser')} className="w-full flex items-center justify-between px-6 py-4 text-left font-medium text-neutral-900 hover:bg-neutral-50">
-              <span>MILIVA Face Cleanser</span>
-              <FiChevronRight className="w-4 h-4 text-neutral-400" />
-            </button>
-            <button onClick={() => handleNav('/product/miliva-face-serum')} className="w-full flex items-center justify-between px-6 py-4 text-left font-medium text-neutral-900 hover:bg-neutral-50">
-              <span>MILIVA Face Serum</span>
-              <FiChevronRight className="w-4 h-4 text-neutral-400" />
-            </button>
-            <button onClick={() => handleNav('/product/miliva-acne-care-combo')} className="w-full flex items-center justify-between px-6 py-4 text-left font-semibold text-neutral-900 bg-cream">
-              <span>MILIVA Acne Care Combo</span>
-              <FiChevronRight className="w-4 h-4 text-neutral-400" />
-            </button>
             <button onClick={() => handleNav('/shop')} className="w-full flex items-center justify-between px-6 py-4 text-left font-medium text-neutral-900 hover:bg-neutral-50">
               <span>Shop All Formulations</span>
               <FiChevronRight className="w-4 h-4 text-neutral-400" />

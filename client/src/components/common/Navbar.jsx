@@ -58,24 +58,6 @@ const Navbar = () => {
           {/* Desktop Links */}
           <nav className="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-widest text-neutral-700">
             <Link
-              to="/product/miliva-face-cleanser"
-              className="hover:text-neutral-900 transition-colors py-1"
-            >
-              Face Cleanser
-            </Link>
-            <Link
-              to="/product/miliva-face-serum"
-              className="hover:text-neutral-900 transition-colors py-1"
-            >
-              Face Serum
-            </Link>
-            <Link
-              to="/product/miliva-acne-care-combo"
-              className="hover:text-neutral-900 transition-colors py-1 font-bold text-neutral-900 bg-cream px-2 py-1 border border-subtle"
-            >
-              Acne Care Combo
-            </Link>
-            <Link
               to="/shop"
               className={`hover:text-neutral-900 transition-colors py-1 ${
                 location.pathname === '/shop' ? 'text-neutral-900 border-b-2 border-neutral-900' : ''
