@@ -53,7 +53,66 @@ const seedData = async () => {
 
     console.log('Creating Official MILIVA Products...');
 
-    // 1. MILIVA Face Cleanser
+    // 1. Salicylic Acid + LHA 2% Cleanser
+    const lhaCleanserProduct = await Product.create({
+      name: 'Salicylic Acid + LHA 2% Cleanser',
+      slug: 'salicylic-acid-lha-2-cleanser',
+      productType: 'Cleanser',
+      shortDescription: 'Reduces Sebum & Prevents Breakout Without Drying Skin',
+      description: 'A daily, gentle exfoliating, acne fighting face cleanser. It combines BHA + LHA (Salicylic Acid + Capryloyl Salicylic Acid) in 2% concentration, which provides deep cleansing, pore decongestion & sebum reduction without drying out the skin.\n\n"I have seen a reduction in acne and oiliness ever since I started using this face cleanser" -Nikhil V.',
+      category: catMap['face-cleanser'],
+      price: 299,
+      compareAtPrice: 349,
+      sku: '8906128100320',
+      stock: 100,
+      size: '100ml',
+      images: [
+        'https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=800&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=800&auto=format&fit=crop'
+      ],
+      variants: [
+        { size: '100ml', price: 299, compareAtPrice: 349, stock: 100, sku: '8906128100320', isActive: true },
+        { size: '250ml', price: 599, compareAtPrice: 699, stock: 80, sku: '8906128101136', isActive: true }
+      ],
+      keyIngredients: [
+        { name: 'Salicylic Acid + LHA', percentage: '2%', benefit: 'Deep pore decongestion & sebum reduction' },
+        { name: 'Oat Extract', percentage: '1%', benefit: 'Soothes skin & calms redness/irritation' },
+        { name: 'Zinc PCA', percentage: '1%', benefit: 'Controls excess oil & balances sebum' },
+        { name: 'Allantoin', percentage: '0.5%', benefit: 'Soothes and protects skin barrier' }
+      ],
+      ingredients: [
+        'Salicylic Acid (BHA)',
+        'Capryloyl Salicylic Acid (LHA)',
+        'Oat Extract',
+        'Zinc PCA',
+        'Allantoin',
+        'Aqua',
+        'Glycerin',
+        'Sodium Lauroyl Sarcosinate',
+        'Cocamidopropyl Betaine',
+        'Disodium EDTA',
+        'Phenoxyethanol'
+      ],
+      benefits: [
+        'Reduces Sebum & Prevents Breakout Without Drying Skin',
+        'Combines BHA + LHA in 2% concentration for deep pore cleansing',
+        'Soothes skin with Oat Extract and Allantoin',
+        '100% Fragrance Free, Non-comedogenic & Essential Oil Free (pH 4.5 - 5.5)'
+      ],
+      howToUse: 'Apply on wet face. Gently massage in circular motions for 60 seconds. Rinse thoroughly with water. Use morning and evening daily.',
+      suitableFor: 'Oily skin, Acne-prone skin, Combination skin',
+      skinTypes: ['Acne-prone', 'Oily', 'Combination'],
+      skinConcerns: ['Acne', 'Excess Sebum', 'Enlarged Pores', 'Uneven Texture'],
+      texture: 'Gentle Gel Cleanser',
+      fragrance: '100% Fragrance-Free (pH: 4.5 - 5.5)',
+      safetyInfo: 'Dermatologically Tested. Non-comedogenic. Essential Oil Free.',
+      rating: 4.8,
+      reviewCount: 2718,
+      isBestSeller: true,
+      isFeatured: true
+    });
+
+    // 2. MILIVA Face Cleanser
     const cleanserProduct = await Product.create({
       name: 'MILIVA Face Cleanser',
       slug: 'miliva-face-cleanser',
