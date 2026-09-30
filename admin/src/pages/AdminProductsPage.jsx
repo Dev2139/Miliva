@@ -132,48 +132,105 @@ export default function AdminProductsPage() {
     setShowModal(true);
   };
 
+  // Client-side image compression helper to keep payloads tiny (<250KB) and prevent 413 Vercel errors
+  const compressImageFile = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) => {
+    return new Promise((resolve) => {
+      if (!file.type || !file.type.startsWith('image/')) return resolve(file);
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                  type: 'image/jpeg',
+                  lastModified: Date.now()
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+      };
+      reader.onerror = () => resolve(file);
+    });
+  };
+
   // Dynamic Image Handlers & Resilient Device Upload to Cloudinary
   const handleDeviceFileUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files || files.length === 0) return;
+    const rawFiles = Array.from(e.target.files);
+    if (!rawFiles || rawFiles.length === 0) return;
 
     setUploading(true);
     try {
-      let uploadedUrls = [];
+      showToast(`Optimizing ${rawFiles.length} image(s) for fast upload...`, 'info');
+      // 1. Compress image files client-side
+      const compressedFiles = await Promise.all(rawFiles.map(file => compressImageFile(file)));
 
-      // Method 1: Multipart FormData upload
-      try {
-        const fileFormData = new FormData();
-        files.forEach((file) => {
-          fileFormData.append('images', file);
-        });
-        const res = await adminService.uploadImages(fileFormData);
-        if (res.success && Array.isArray(res.urls) && res.urls.length > 0) {
-          uploadedUrls = res.urls;
-        }
-      } catch (backendErr) {
-        console.warn('Multipart upload failed, trying Base64 JSON fallback...', backendErr);
-      }
+      const uploadedUrls = [];
 
-      // Method 2: Base64 JSON upload fallback
-      if (uploadedUrls.length === 0) {
-        const b64Promises = files.map(file => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        }));
+      // 2. Upload files one by one to ensure each HTTP request is < 250KB (avoiding 413 errors)
+      for (let i = 0; i < compressedFiles.length; i++) {
+        const file = compressedFiles[i];
+        let url = null;
 
-        const b64Strings = await Promise.all(b64Promises);
-        
+        // Method A: Multipart upload
         try {
-          const res = await adminService.uploadImagesJson({ images: b64Strings });
-          if (res.success && Array.isArray(res.urls) && res.urls.length > 0) {
-            uploadedUrls = res.urls;
+          const fileFormData = new FormData();
+          fileFormData.append('images', file);
+          const res = await adminService.uploadImages(fileFormData);
+          if (res.success && Array.isArray(res.urls) && res.urls[0]) {
+            url = res.urls[0];
           }
-        } catch (jsonErr) {
-          console.warn('Base64 backend upload failed, using Data URLs for image state...', jsonErr);
-          uploadedUrls = b64Strings;
+        } catch (backendErr) {
+          console.warn(`Multipart upload failed for file ${i + 1}, trying JSON Base64 fallback...`, backendErr);
+        }
+
+        // Method B: Base64 JSON upload fallback
+        if (!url) {
+          try {
+            const b64 = await new Promise((res, rej) => {
+              const r = new FileReader();
+              r.onload = () => res(r.result);
+              r.onerror = rej;
+              r.readAsDataURL(file);
+            });
+
+            const res = await adminService.uploadImagesJson({ images: [b64] });
+            if (res.success && Array.isArray(res.urls) && res.urls[0]) {
+              url = res.urls[0];
+            }
+          } catch (b64Err) {
+            console.warn('Base64 upload failed:', b64Err);
+          }
+        }
+
+        if (url) {
+          uploadedUrls.push(url);
         }
       }
 
@@ -193,9 +250,9 @@ export default function AdminProductsPage() {
           ]
         }));
 
-        showToast(`Successfully added ${uploadedUrls.length} product image(s)!`, 'success');
+        showToast(`Successfully uploaded ${uploadedUrls.length} Cloudinary image(s)!`, 'success');
       } else {
-        showToast('Failed to process image files', 'error');
+        showToast('Failed to upload images. Please check Cloudinary credentials.', 'error');
       }
     } catch (err) {
       showToast('Error processing device images', 'error');
