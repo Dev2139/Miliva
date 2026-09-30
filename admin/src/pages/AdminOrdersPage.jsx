@@ -51,8 +51,8 @@ export default function AdminOrdersPage() {
   const handleOpenDetail = (order) => {
     setSelectedOrder(order);
     setStatus(order.orderStatus || 'Pending');
-    setCarrier(order.trackingInfo?.carrier || 'Bluedart');
-    setTrackingNumber(order.trackingInfo?.trackingNumber || '');
+    setCarrier(order.tracking?.courier || order.trackingInfo?.carrier || 'Bluedart');
+    setTrackingNumber(order.tracking?.trackingNumber || order.trackingInfo?.trackingNumber || '');
     setComment('');
     setShowModal(true);
   };
@@ -64,13 +64,18 @@ export default function AdminOrdersPage() {
     try {
       const payload = {
         orderStatus: status,
+        status: status,
+        courier: carrier,
+        carrier: carrier,
+        trackingNumber: trackingNumber,
+        note: comment,
+        comment: comment,
         trackingInfo: {
           carrier,
           trackingNumber,
           shippedAt: status === 'Shipped' || status === 'Out for Delivery' || status === 'Delivered' ? new Date() : undefined,
           deliveredAt: status === 'Delivered' ? new Date() : undefined
-        },
-        comment
+        }
       };
 
       const res = await adminService.updateOrderStatus(selectedOrder._id, payload);
@@ -237,7 +242,8 @@ export default function AdminOrdersPage() {
                     Shipping Address
                   </h4>
                   <p className="text-xs text-neutral-200">
-                    {selectedOrder.shippingAddress?.addressLine1}, {selectedOrder.shippingAddress?.addressLine2}
+                    {selectedOrder.shippingAddress?.house || selectedOrder.shippingAddress?.addressLine1}
+                    {(selectedOrder.shippingAddress?.street || selectedOrder.shippingAddress?.addressLine2) ? `, ${selectedOrder.shippingAddress?.street || selectedOrder.shippingAddress?.addressLine2}` : ''}
                   </p>
                   <p className="text-xs text-neutral-300 font-semibold mt-1">
                     {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.pincode}

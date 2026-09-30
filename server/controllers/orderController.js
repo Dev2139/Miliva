@@ -140,11 +140,15 @@ export const createOrder = async (req, res, next) => {
   }
 };
 
-// @desc    Get logged in user orders
+// @desc    Get logged in user orders (Customers get their own orders, Admins get ALL customer orders)
 // @route   GET /api/orders
 export const getUserOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const filter = req.user.role === 'admin' ? {} : { user: req.user._id };
+    const orders = await Order.find(filter)
+      .populate('user', 'name email phone')
+      .sort({ createdAt: -1 });
+
     res.json({ success: true, orders });
   } catch (error) {
     next(error);
@@ -161,7 +165,7 @@ export const getOrderById = async (req, res, next) => {
     }
 
     // Check ownership or admin
-    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (order.user && order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Not authorized to view this order' });
     }
 
@@ -198,7 +202,11 @@ export const trackOrder = async (req, res, next) => {
 // @route   PUT /api/orders/:id/status
 export const updateOrderStatus = async (req, res, next) => {
   try {
-    const { status, trackingNumber, courier, note } = req.body;
+    const status = req.body.status || req.body.orderStatus;
+    const trackingNumber = req.body.trackingNumber || req.body.trackingInfo?.trackingNumber;
+    const courier = req.body.courier || req.body.carrier || req.body.trackingInfo?.carrier;
+    const note = req.body.note || req.body.comment;
+
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -207,6 +215,10 @@ export const updateOrderStatus = async (req, res, next) => {
 
     const oldStatus = order.orderStatus;
     order.orderStatus = status;
+
+    if (!order.tracking) {
+      order.tracking = { timeline: [] };
+    }
 
     if (trackingNumber) order.tracking.trackingNumber = trackingNumber;
     if (courier) order.tracking.courier = courier;
@@ -217,17 +229,20 @@ export const updateOrderStatus = async (req, res, next) => {
       if (order.paymentMethod === 'cod') {
         order.isPaid = true;
         order.paidAt = new Date();
+        order.paymentInfo = order.paymentInfo || {};
         order.paymentInfo.status = 'paid';
       }
     }
 
     // Add status to tracking timeline
-    order.tracking.timeline.push({
-      status,
-      title: `Order ${status}`,
-      description: note || `Order status updated to ${status}`,
-      timestamp: new Date()
-    });
+    if (Array.isArray(order.tracking.timeline)) {
+      order.tracking.timeline.push({
+        status,
+        title: `Order ${status}`,
+        description: note || `Order status updated to ${status}`,
+        timestamp: new Date()
+      });
+    }
 
     // If order cancelled/returned, restore inventory!
     if ((status === 'Cancelled' || status === 'Returned') && oldStatus !== 'Cancelled' && oldStatus !== 'Returned') {
@@ -241,13 +256,15 @@ export const updateOrderStatus = async (req, res, next) => {
     await order.save();
 
     // Create Notification
-    await Notification.create({
-      user: order.user,
-      title: `Order Status Updated: ${status}`,
-      message: `Your order #${order.orderNumber} is now ${status}.`,
-      type: 'order',
-      link: `/orders/${order._id}/track`
-    });
+    if (order.user) {
+      await Notification.create({
+        user: order.user,
+        title: `Order Status Updated: ${status}`,
+        message: `Your order #${order.orderNumber} is now ${status}.`,
+        type: 'order',
+        link: `/orders/${order._id}/track`
+      });
+    }
 
     res.json({ success: true, order });
   } catch (error) {
