@@ -1,0 +1,20 @@
+{
+  "name": "miliva-cosmetics",
+  "version": "1.0.0",
+  "description": "Production-Ready Minimalist Cosmetics E-Commerce Platform",
+  "scripts": {
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev:admin": "npm run dev --prefix admin",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client && npm install --prefix admin",
+    "seed": "npm run seed --prefix server",
+    "cleanup-products": "npm run cleanup-products --prefix server",
+    "build:client": "npm run build --prefix client",
+    "build:admin": "npm run build --prefix admin",
+    "build": "npm run build:client && npm run build:admin"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

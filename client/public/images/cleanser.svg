@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDFBF7"/>
+      <stop offset="100%" stop-color="#F4EFE6"/>
+    </linearGradient>
+    <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#242424"/>
+      <stop offset="25%" stop-color="#171717"/>
+      <stop offset="70%" stop-color="#2B2B2B"/>
+      <stop offset="100%" stop-color="#121212"/>
+    </linearGradient>
+    <linearGradient id="pumpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#F5F5F5"/>
+      <stop offset="100%" stop-color="#E5E5E5"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="25" stdDeviation="20" flood-color="#171717" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle floor shadow -->
+  <ellipse cx="400" cy="710" rx="160" ry="25" fill="#000000" opacity="0.1" filter="blur(10px)"/>
+
+  <!-- Bottle Container -->
+  <g filter="url(#shadow)">
+    <!-- Pump Dispenser -->
+    <!-- Nozzle head -->
+    <path d="M340 180 H430 C445 180 455 190 455 205 V220 H340 Z" fill="url(#pumpGrad)"/>
+    <path d="M430 190 L480 195 V210 L430 205 Z" fill="#E0E0E0"/>
+    <!-- Stem/Neck -->
+    <rect x="382" y="220" width="36" height="45" fill="#E5E5E5" rx="2"/>
+    <rect x="370" y="265" width="60" height="25" fill="#CCCCCC" rx="3"/>
+
+    <!-- Bottle Body (Black) -->
+    <rect x="290" y="290" width="220" height="390" rx="28" fill="url(#bottleGrad)"/>
+
+    <!-- Bottle Label (Crisp Minimalist White/Cream Label) -->
+    <rect x="310" y="340" width="180" height="290" fill="#FAFAFA" rx="4"/>
+    
+    <!-- Label Typography -->
+    <text x="400" y="390" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="22" letter-spacing="4" fill="#171717">MILIVA</text>
+    <line x1="340" y1="410" x2="460" y2="410" stroke="#171717" stroke-width="1.5"/>
+    
+    <text x="400" y="440" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14" letter-spacing="2" fill="#171717">FACE CLEANSER</text>
+    <text x="400" y="465" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="10" letter-spacing="1" fill="#6B6B6B">ACNE &amp; BRIGHTENING</text>
+    
+    <!-- Key Active Ingredients Badges on Label -->
+    <rect x="330" y="490" width="140" height="1" fill="#E5E5E5"/>
+    
+    <text x="400" y="520" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="10" fill="#171717">Salicylic Acid 2%</text>
+    <text x="400" y="540" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="10" fill="#171717">Zinc PCA 1% &bull; Niacinamide</text>
+    
+    <text x="400" y="585" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="500" font-size="9" letter-spacing="1.5" fill="#888888">DERMATOLOGICALLY TESTED</text>
+    <text x="400" y="605" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="9" fill="#171717">100ml / 3.38 fl. oz.</text>
+  </g>
+</svg>

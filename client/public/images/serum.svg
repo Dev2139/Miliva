@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGradSerum" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDFBF7"/>
+      <stop offset="100%" stop-color="#F4EFE6"/>
+    </linearGradient>
+    <linearGradient id="frostedGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="40%" stop-color="#F7F5F0" stop-opacity="0.90"/>
+      <stop offset="80%" stop-color="#EFEBE4" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.90"/>
+    </linearGradient>
+    <linearGradient id="blackPumpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#242424"/>
+      <stop offset="50%" stop-color="#171717"/>
+      <stop offset="100%" stop-color="#0A0A0A"/>
+    </linearGradient>
+    <filter id="shadowSerum" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="25" stdDeviation="20" flood-color="#171717" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bgGradSerum)"/>
+  
+  <!-- Subtle floor shadow -->
+  <ellipse cx="400" cy="710" rx="140" ry="22" fill="#000000" opacity="0.08" filter="blur(10px)"/>
+
+  <!-- Bottle Container -->
+  <g filter="url(#shadowSerum)">
+    <!-- Black Pump & Collar -->
+    <!-- Pump head nozzle -->
+    <path d="M350 200 H420 C435 200 445 210 445 225 V240 H350 Z" fill="url(#blackPumpGrad)"/>
+    <path d="M420 210 L465 215 V230 L420 225 Z" fill="#2B2B2B"/>
+    <!-- Collar ring -->
+    <rect x="382" y="240" width="36" height="40" fill="#171717" rx="2"/>
+    <rect x="365" y="280" width="70" height="30" fill="#242424" rx="3"/>
+
+    <!-- Frosted Glass Bottle Body -->
+    <rect x="300" y="310" width="200" height="370" rx="24" fill="url(#frostedGlass)" stroke="#E2DDD5" stroke-width="2"/>
+
+    <!-- Serum Liquid Tint Shadow Inside Glass -->
+    <rect x="312" y="360" width="176" height="306" rx="16" fill="#F4EFEA" opacity="0.6"/>
+
+    <!-- Minimalist Bottle Label -->
+    <rect x="320" y="365" width="160" height="260" fill="#FFFFFF" rx="2" stroke="#EAE6DF"/>
+    
+    <!-- Label Typography -->
+    <text x="400" y="415" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="20" letter-spacing="4" fill="#171717">MILIVA</text>
+    <line x1="345" y1="432" x2="455" y2="432" stroke="#171717" stroke-width="1.5"/>
+    
+    <text x="400" y="460" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="13" letter-spacing="2" fill="#171717">FACE SERUM</text>
+    <text x="400" y="482" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="400" font-size="9" letter-spacing="1" fill="#6B6B6B">CLEAR &amp; EVEN TONE</text>
+    
+    <rect x="340" y="505" width="120" height="1" fill="#E5E5E5"/>
+    
+    <text x="400" y="530" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="9.5" fill="#171717">Salicylic Acid &bull; Alpha Arbutin</text>
+    <text x="400" y="548" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="9.5" fill="#171717">Niacinamide</text>
+    
+    <text x="400" y="590" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="500" font-size="8.5" letter-spacing="1.2" fill="#888888">FRAGRANCE-FREE</text>
+    <text x="400" y="608" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="8.5" fill="#171717">30ml / 1.01 fl. oz.</text>
+  </g>
+</svg>
