@@ -1,2 +1,5 @@
-/api/*  https://miliva.vercel.app/api/:splat  200
-/*      /index.html                           200
+# Proxy product share preview link to Vercel backend so WhatsApp, Facebook, iMessage crawlers see OpenGraph image meta tags
+/p/:slug  https://miliva.vercel.app/p/:slug  200
+
+# Client Single Page Application Fallback
+/*  /index.html  200

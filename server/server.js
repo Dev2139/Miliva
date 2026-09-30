@@ -22,6 +22,8 @@ import adminRoutes from './routes/adminRoutes.js';
 import bundleRoutes from './routes/bundleRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
+import { renderProductSharePage } from './controllers/productController.js';
+
 dotenv.config();
 
 // Connect to MongoDB database
@@ -56,6 +58,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Serve static uploads
 const uploadsPath = path.join(process.cwd(), 'uploads');
 app.use('/uploads', express.static(uploadsPath));
+
+// Product Social Share HTML Endpoint (WhatsApp, Facebook, Twitter, iMessage preview link)
+app.get('/p/:slug', renderProductSharePage);
 
 // Welcome & API Status Endpoints
 app.get('/', (req, res) => {

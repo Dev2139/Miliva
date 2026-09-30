@@ -18,7 +18,10 @@ const ProductShareModal = ({ isOpen, onClose, product }) => {
 
   if (!isOpen || !product) return null;
 
-  const productUrl = window.location.origin + `/product/${product.slug}`;
+  const clientProductUrl = window.location.origin + `/product/${product.slug}`;
+  // Social share preview link (Proxies to Vercel HTML generator with OG product image)
+  const sharePreviewUrl = window.location.origin + `/p/${product.slug}`;
+
   const productImage = product.images && product.images[0] 
     ? product.images[0] 
     : 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=600&auto=format&fit=crop';
@@ -28,39 +31,38 @@ const ProductShareModal = ({ isOpen, onClose, product }) => {
     ? `(${Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}% OFF)`
     : '';
 
-  // Amazon style formatted text message
+  // Amazon style formatted text message for WhatsApp & Messaging apps
   const shareMessageText = `🌿 Check out *${product.name}* on MILIVA Skincare!
   
 💰 Price: ${formattedPrice} ${discountText}
 ✨ ${product.shortDescription || 'Dermatologically tested luxury formulation.'}
 
-📷 Product Image: ${productImage}
-👇 View & Order directly here:
-${productUrl}`;
+👇 Tap link to view product & order:
+${sharePreviewUrl}`;
 
   // Direct WhatsApp Share link
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareMessageText)}`;
 
   // Facebook Share link
-  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(sharePreviewUrl)}`;
 
   // Twitter/X Share link
-  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${product.name} on MILIVA Skincare!`)}&url=${encodeURIComponent(productUrl)}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out ${product.name} on MILIVA Skincare!`)}&url=${encodeURIComponent(sharePreviewUrl)}`;
 
   // Telegram Share link
-  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(`${product.name} - ${formattedPrice}`)}`;
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(sharePreviewUrl)}&text=${encodeURIComponent(`${product.name} - ${formattedPrice}`)}`;
 
   // Email Share link
   const emailUrl = `mailto:?subject=${encodeURIComponent(`Check out ${product.name} on MILIVA`)}&body=${encodeURIComponent(shareMessageText)}`;
 
   // Pinterest Share link
-  const pinterestUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(productUrl)}&media=${encodeURIComponent(productImage)}&description=${encodeURIComponent(product.name)}`;
+  const pinterestUrl = `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(sharePreviewUrl)}&media=${encodeURIComponent(productImage)}&description=${encodeURIComponent(product.name)}`;
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(productUrl);
+      await navigator.clipboard.writeText(sharePreviewUrl);
       setCopied(true);
-      showToast('Product link copied to clipboard!', 'success');
+      showToast('Product share link with image copied to clipboard!', 'success');
       setTimeout(() => setCopied(false), 3000);
     } catch (err) {
       showToast('Failed to copy link', 'error');
@@ -73,7 +75,7 @@ ${productUrl}`;
         await navigator.share({
           title: `${product.name} | MILIVA Skincare`,
           text: `Check out ${product.name} on MILIVA Skincare! Price: ${formattedPrice}`,
-          url: productUrl
+          url: sharePreviewUrl
         });
         showToast('Shared successfully!', 'success');
       } catch (err) {
@@ -240,7 +242,7 @@ ${productUrl}`;
               <input
                 type="text"
                 readOnly
-                value={productUrl}
+                value={sharePreviewUrl}
                 className="flex-1 px-3 py-2 text-xs font-mono text-neutral-700 bg-transparent focus:outline-none"
               />
               <button
