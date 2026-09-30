@@ -55,8 +55,15 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-16 grid grid-cols-1 md:grid-cols-5 gap-10">
         {/* Brand & Newsletter Column */}
         <div className="md:col-span-2 space-y-6">
-          <Link to="/" className="text-2xl font-bold tracking-widest font-editorial">
-            MILIVA
+          <Link to="/" className="inline-flex items-center gap-2">
+            <img
+              src="https://res.cloudinary.com/urzka7oz/image/upload/v1790754694/Screenshot_2026-09-30_131941-removebg-preview.png"
+              alt="Miliva Skincare"
+              className="h-8 w-auto object-contain brightness-0 invert"
+            />
+            <span className="text-[9px] uppercase tracking-widest text-neutral-400 font-bold border-l border-neutral-700 pl-2">
+              SKINCARE
+            </span>
           </Link>
           <p className="text-xs text-neutral-400 max-w-sm leading-relaxed">
             Effective formulations built around honest ingredients. Transparent, science-led D2C skincare designed to perform.

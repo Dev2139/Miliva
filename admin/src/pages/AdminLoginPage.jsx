@@ -32,11 +32,12 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-            <FiShield className="w-8 h-8 text-emerald-400" />
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-widest text-white uppercase">MILIVA</h1>
-          <p className="text-xs font-semibold tracking-wider text-emerald-400 uppercase mt-1">ADMINISTRATOR PORTAL</p>
+          <img
+            src="https://res.cloudinary.com/urzka7oz/image/upload/v1790754694/Screenshot_2026-09-30_131941-removebg-preview.png"
+            alt="Miliva Skincare Logo"
+            className="h-12 w-auto object-contain mx-auto mb-3 brightness-0 invert"
+          />
+          <p className="text-xs font-semibold tracking-wider text-emerald-400 uppercase mt-1">SKINCARE ADMINISTRATOR PORTAL</p>
           <p className="text-sm text-neutral-400 mt-2">Sign in to manage products, orders, inventory & analytics</p>
         </div>
 

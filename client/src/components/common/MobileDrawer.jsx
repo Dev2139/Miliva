@@ -24,8 +24,15 @@ const MobileDrawer = ({ isOpen, onClose, onOpenSearch }) => {
         <div>
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-subtle">
-            <Link to="/" onClick={onClose} className="text-xl font-bold tracking-widest text-neutral-900 font-editorial">
-              MILIVA
+            <Link to="/" onClick={onClose} className="flex items-center gap-2">
+              <img
+                src="https://res.cloudinary.com/urzka7oz/image/upload/v1790754694/Screenshot_2026-09-30_131941-removebg-preview.png"
+                alt="Miliva Skincare"
+                className="h-7 w-auto object-contain"
+              />
+              <span className="text-[9px] uppercase tracking-widest text-neutral-400 font-bold border-l border-neutral-300 pl-2">
+                SKINCARE
+              </span>
             </Link>
             <button onClick={onClose} className="p-2 text-neutral-500 hover:text-neutral-900" aria-label="Close menu">
               <FiX className="w-5 h-5" />

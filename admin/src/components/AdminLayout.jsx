@@ -65,14 +65,15 @@ export default function AdminLayout() {
       `}>
         {/* Brand Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-neutral-800">
-          <Link to="/" className="flex items-center space-x-3">
-            <span className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400 text-lg">
-              M
+          <Link to="/" className="flex items-center space-x-2.5">
+            <img
+              src="https://res.cloudinary.com/urzka7oz/image/upload/v1790754694/Screenshot_2026-09-30_131941-removebg-preview.png"
+              alt="Miliva Skincare"
+              className="h-8 w-auto object-contain brightness-0 invert"
+            />
+            <span className="text-[9px] text-emerald-400 font-bold tracking-wider uppercase border-l border-neutral-700 pl-2">
+              SKINCARE ADMIN
             </span>
-            <div>
-              <span className="font-extrabold text-lg tracking-widest text-white uppercase block leading-none">MILIVA</span>
-              <span className="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">ADMIN PORTAL</span>
-            </div>
           </Link>
           <button 
             onClick={() => setSidebarOpen(false)}

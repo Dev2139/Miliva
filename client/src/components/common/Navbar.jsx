@@ -46,11 +46,13 @@ const Navbar = () => {
           </button>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl md:text-3xl font-bold tracking-widest text-neutral-900 font-editorial">
-              MILIVA
-            </span>
-            <span className="hidden sm:inline-block text-[9px] uppercase tracking-widest text-neutral-400 font-semibold border-l border-neutral-300 pl-2">
+          <Link to="/" className="flex items-center gap-2.5">
+            <img
+              src="https://res.cloudinary.com/urzka7oz/image/upload/v1790754694/Screenshot_2026-09-30_131941-removebg-preview.png"
+              alt="Miliva Skincare"
+              className="h-8 md:h-10 w-auto object-contain"
+            />
+            <span className="text-[9px] md:text-[10px] uppercase tracking-widest text-neutral-400 font-bold border-l border-neutral-300 pl-2">
               SKINCARE
             </span>
           </Link>
