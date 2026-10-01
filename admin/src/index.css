@@ -1,15 +1,37 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-main: #FFFFFF;
+    --bg-cream: #F7F3ED;
+    --bg-soft-beige: #EFE9DF;
+    --text-primary: #171717;
+    --text-muted: #6B6B6B;
+    --border-color: #E5E5E5;
+    --accent-dark: #121212;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background-color: #F7F7F7;
+    background-color: #F8F8F8;
     color: #171717;
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+.bg-cream {
+  background-color: #F7F3ED;
+}
+
+.bg-soft-beige {
+  background-color: #EFE9DF;
+}
+
+.border-subtle {
+  border-color: #E5E5E5;
 }
 
 .font-editorial {
@@ -17,21 +39,22 @@
   letter-spacing: -0.02em;
 }
 
-/* Custom Scrollbars for Admin Tables */
+/* Custom Scrollbars for Admin UI */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F1F1;
+  background: #F7F3ED;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #C4C4C4;
+  background: #D4CEC5;
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #171717;
 }
+

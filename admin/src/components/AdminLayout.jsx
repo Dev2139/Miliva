@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FiGrid, 
   FiBox, 
@@ -16,7 +16,8 @@ import {
   FiMenu,
   FiX,
   FiBell,
-  FiUser
+  FiSearch,
+  FiExternalLink
 } from 'react-icons/fi';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../context/AdminToastContext';
@@ -25,7 +26,9 @@ export default function AdminLayout() {
   const { adminUser, logout } = useAdminAuth();
   const { showToast } = useAdminToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -38,7 +41,7 @@ export default function AdminLayout() {
     { label: 'Products', path: '/products', icon: FiBox },
     { label: 'Categories', path: '/categories', icon: FiLayers },
     { label: 'Bundles & Combos', path: '/bundles', icon: FiPackage },
-    { label: 'Inventory Management', path: '/inventory', icon: FiShoppingBag },
+    { label: 'Inventory', path: '/inventory', icon: FiShoppingBag },
     { label: 'Orders Management', path: '/orders', icon: FiShoppingBag },
     { label: 'Customers', path: '/customers', icon: FiUsers },
     { label: 'Reviews', path: '/reviews', icon: FiStar },
@@ -48,107 +51,121 @@ export default function AdminLayout() {
     { label: 'Store Settings', path: '/settings', icon: FiSettings },
   ];
 
+  // Breadcrumb mapping
+  const currentItem = navItems.find(item => item.path === location.pathname) || { label: 'Admin Portal' };
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex font-sans">
-      {/* Mobile Sidebar Overlay */}
+    <div className="min-h-screen bg-[#F8F8F8] text-neutral-900 flex font-sans overflow-hidden">
+      {/* Mobile Sidebar Backdrop */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Standalone Luxury Dark Sidebar */}
       <aside className={`
-        fixed top-0 bottom-0 left-0 z-50 w-72 bg-neutral-900 border-r border-neutral-800 flex flex-col transition-transform duration-300 ease-in-out
+        fixed top-0 bottom-0 left-0 z-50 w-64 bg-[#141414] text-white border-r border-neutral-800 flex flex-col justify-between transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Brand Header */}
-        <div className="h-16 px-6 flex items-center justify-between border-b border-neutral-800">
-          <Link to="/" className="flex items-center space-x-2.5">
-            <img
-              src="https://res.cloudinary.com/urzka7oz/image/upload/v1790754694/Screenshot_2026-09-30_131941-removebg-preview.png"
-              alt="Miliva Skincare"
-              className="h-8 w-auto object-contain brightness-0 invert"
-            />
-            <span className="text-[9px] text-emerald-400 font-bold tracking-wider uppercase border-l border-neutral-700 pl-2">
-              SKINCARE ADMIN
-            </span>
-          </Link>
-          <button 
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800"
+        <div>
+          <div className="h-16 px-5 flex items-center justify-between border-b border-neutral-800">
+            <Link to="/" className="flex items-center gap-2.5">
+              <span className="text-xl font-bold tracking-widest text-white font-editorial">MILIVA</span>
+              <span className="text-[9px] uppercase font-bold bg-neutral-800 text-neutral-300 px-2 py-0.5 border border-neutral-700 tracking-widest">
+                ADMIN
+              </span>
+            </Link>
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-1.5 rounded text-neutral-400 hover:text-white hover:bg-neutral-800"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Nav Links */}
+          <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-170px)] text-xs font-semibold">
+            <div className="px-3 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+              Store Operations
+            </div>
+            {navItems.slice(0, 6).map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === '/'}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) => `
+                    flex items-center px-3.5 py-2.5 rounded-sm transition-all text-xs font-semibold gap-3
+                    ${isActive 
+                      ? 'bg-white text-neutral-900 font-bold shadow-xs' 
+                      : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}
+                  `}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </NavLink>
+              );
+            })}
+
+            <div className="pt-4 px-3 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+              Marketing & Config
+            </div>
+            {navItems.slice(6).map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) => `
+                    flex items-center px-3.5 py-2.5 rounded-sm transition-all text-xs font-semibold gap-3
+                    ${isActive 
+                      ? 'bg-white text-neutral-900 font-bold shadow-xs' 
+                      : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'}
+                  `}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Footer User Info & Shortcuts */}
+        <div className="p-3 border-t border-neutral-800 space-y-2 bg-[#101010]">
+          <a
+            href="http://localhost:5173"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between text-xs font-semibold text-neutral-300 hover:text-white px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-sm w-full transition-colors"
           >
-            <FiX className="w-5 h-5" />
-          </button>
-        </div>
+            <span className="flex items-center gap-2">
+              <FiExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+              <span>Storefront View</span>
+            </span>
+            <span className="text-[10px] font-mono text-neutral-500">Live</span>
+          </a>
 
-        {/* Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-          <div className="px-3 py-2 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
-            Management
-          </div>
-          {navItems.slice(0, 6).map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.path === '/'}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) => `
-                  flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-                  ${isActive 
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 shadow-sm' 
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'}
-                `}
-              >
-                <Icon className="w-4 h-4 mr-3" />
-                {item.label}
-              </NavLink>
-            );
-          })}
-
-          <div className="pt-4 px-3 py-2 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
-            Marketing & Store
-          </div>
-          {navItems.slice(6).map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) => `
-                  flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
-                  ${isActive 
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 shadow-sm' 
-                    : 'text-neutral-400 hover:text-white hover:bg-neutral-800/60'}
-                `}
-              >
-                <Icon className="w-4 h-4 mr-3" />
-                {item.label}
-              </NavLink>
-            );
-          })}
-        </div>
-
-        {/* Admin Footer User Info */}
-        <div className="p-4 border-t border-neutral-800 bg-neutral-900/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
+          <div className="flex items-center justify-between pt-1 px-1">
+            <div className="flex items-center space-x-2.5 overflow-hidden">
+              <div className="w-7 h-7 rounded-full bg-neutral-800 text-white font-bold text-xs flex items-center justify-center font-editorial border border-neutral-700">
                 {adminUser?.name?.charAt(0) || 'A'}
               </div>
               <div className="truncate">
-                <p className="text-sm font-medium text-white truncate">{adminUser?.name || 'Admin User'}</p>
-                <p className="text-xs text-neutral-400 truncate">{adminUser?.email || 'admin@miliva.com'}</p>
+                <p className="text-xs font-bold text-white truncate leading-tight">{adminUser?.name || 'Administrator'}</p>
+                <p className="text-[10px] text-neutral-400 truncate">{adminUser?.email || 'admin@miliva.com'}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
               title="Logout"
-              className="p-2 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className="p-1.5 text-neutral-400 hover:text-red-400 hover:bg-neutral-800 rounded transition-colors"
             >
               <FiLogOut className="w-4 h-4" />
             </button>
@@ -156,41 +173,58 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main Content Container */}
-      <div className="flex-1 flex flex-col lg:pl-72 min-w-0">
-        {/* Top Header Bar */}
-        <header className="h-16 bg-neutral-900/80 backdrop-blur border-b border-neutral-800 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col lg:pl-64 min-w-0 h-screen overflow-hidden">
+        {/* Top Header Navigation */}
+        <header className="h-16 bg-white border-b border-subtle px-4 sm:px-6 lg:px-8 flex items-center justify-between flex-shrink-0 z-30">
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800"
+              className="lg:hidden p-2 rounded text-neutral-700 hover:bg-neutral-100"
             >
               <FiMenu className="w-5 h-5" />
             </button>
-            <h1 className="text-sm sm:text-base font-semibold text-neutral-200">
-              MILIVA Administrative Operations
-            </h1>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-neutral-400 font-medium">Admin</span>
+              <span className="text-neutral-300">/</span>
+              <span className="font-bold text-neutral-900 uppercase tracking-wider">{currentItem.label}</span>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Live System Connected</span>
+          <div className="flex items-center space-x-4">
+            {/* Quick Search */}
+            <div className="relative hidden md:block">
+              <FiSearch className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                placeholder="Quick search SKU, orders..."
+                className="pl-8 pr-3 py-1.5 text-xs bg-neutral-100 border border-neutral-300 rounded-sm w-56 focus:outline-none focus:bg-white focus:border-neutral-900 transition-colors"
+              />
+            </div>
+
+            {/* Live Indicator */}
+            <div className="hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live System</span>
             </div>
 
             <button 
-              className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 relative"
+              className="p-2 rounded text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 relative"
               title="System Alerts"
             >
               <FiBell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-500" />
             </button>
           </div>
         </header>
 
-        {/* Content Body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          <Outlet />
+        {/* Scrollable Viewport */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto bg-[#F8F8F8]">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

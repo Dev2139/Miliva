@@ -45,12 +45,10 @@ export default function AdminProductsPage() {
     isNew: false,
     isFeatured: true,
     videoUrl: '',
-    // Multiple Images Support
     images: [
       { url: '/images/cleanser.svg', alt: 'MILIVA Face Cleanser Front', isPrimary: true },
       { url: '/images/cleanser.svg', alt: 'MILIVA Face Cleanser Texture', isPrimary: false }
     ],
-    // Size Variants Support
     variants: [
       { size: '100ml', price: 349, compareAtPrice: 399, stock: 100, sku: 'MIL-FC-100' },
       { size: '200ml', price: 599, compareAtPrice: 699, stock: 80, sku: 'MIL-FC-200' }
@@ -91,7 +89,6 @@ export default function AdminProductsPage() {
   const handleOpenEdit = (prod) => {
     setEditingId(prod._id);
     
-    // Process images array for multi-image editor
     let formattedImages = [];
     if (Array.isArray(prod.images) && prod.images.length > 0) {
       formattedImages = prod.images.map((img, idx) => {
@@ -133,7 +130,6 @@ export default function AdminProductsPage() {
     setShowModal(true);
   };
 
-  // Client-side image compression helper to keep payloads tiny (<250KB) and prevent 413 Vercel errors
   const compressImageFile = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) => {
     return new Promise((resolve) => {
       if (!file.type || !file.type.startsWith('image/')) return resolve(file);
@@ -181,25 +177,20 @@ export default function AdminProductsPage() {
     });
   };
 
-  // Dynamic Image Handlers & Resilient Device Upload to Cloudinary
   const handleDeviceFileUpload = async (e) => {
     const rawFiles = Array.from(e.target.files);
     if (!rawFiles || rawFiles.length === 0) return;
 
     setUploading(true);
     try {
-      showToast(`Optimizing ${rawFiles.length} image(s) for fast upload...`, 'info');
-      // 1. Compress image files client-side
+      showToast(`Optimizing ${rawFiles.length} image(s)...`, 'info');
       const compressedFiles = await Promise.all(rawFiles.map(file => compressImageFile(file)));
-
       const uploadedUrls = [];
 
-      // 2. Upload files one by one to ensure each HTTP request is < 250KB (avoiding 413 errors)
       for (let i = 0; i < compressedFiles.length; i++) {
         const file = compressedFiles[i];
         let url = null;
 
-        // Method A: Multipart upload
         try {
           const fileFormData = new FormData();
           fileFormData.append('images', file);
@@ -211,7 +202,6 @@ export default function AdminProductsPage() {
           console.warn(`Multipart upload failed for file ${i + 1}, trying JSON Base64 fallback...`, backendErr);
         }
 
-        // Method B: Base64 JSON upload fallback
         let b64DataUrl = null;
         try {
           b64DataUrl = await new Promise((res, rej) => {
@@ -235,7 +225,6 @@ export default function AdminProductsPage() {
           }
         }
 
-        // Method C: Direct Cloudinary Unsigned Upload
         if (!url && b64DataUrl) {
           try {
             const cloudFd = new FormData();
@@ -254,7 +243,6 @@ export default function AdminProductsPage() {
           }
         }
 
-        // Final Fallback: Use compressed Data URL (~120KB) so image preview & saving never fails!
         if (!url && b64DataUrl) {
           url = b64DataUrl;
         }
@@ -280,9 +268,9 @@ export default function AdminProductsPage() {
           ]
         }));
 
-        showToast(`Successfully uploaded ${uploadedUrls.length} Cloudinary image(s)!`, 'success');
+        showToast(`Uploaded ${uploadedUrls.length} image(s)!`, 'success');
       } else {
-        showToast('Failed to upload images. Please check Cloudinary credentials.', 'error');
+        showToast('Failed to upload images.', 'error');
       }
     } catch (err) {
       showToast('Error processing device images', 'error');
@@ -292,17 +280,15 @@ export default function AdminProductsPage() {
     }
   };
 
-  // Direct Device Video Upload to Cloudinary Handler
   const handleDeviceVideoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingVideo(true);
     try {
-      showToast('Uploading video file from device to Cloudinary...', 'info');
+      showToast('Uploading video file to Cloudinary...', 'info');
       let url = null;
 
-      // Method A: Multipart upload
       try {
         const fileFormData = new FormData();
         fileFormData.append('video', file);
@@ -311,10 +297,9 @@ export default function AdminProductsPage() {
           url = res.url || res.videoUrl;
         }
       } catch (backendErr) {
-        console.warn('Multipart video upload failed, trying JSON Base64 fallback...', backendErr);
+        console.warn('Multipart video upload failed, trying fallback...', backendErr);
       }
 
-      // Method B: Base64 JSON upload fallback
       let b64DataUrl = null;
       try {
         b64DataUrl = await new Promise((res, rej) => {
@@ -338,7 +323,6 @@ export default function AdminProductsPage() {
         }
       }
 
-      // Method C: Direct Cloudinary Unsigned Video Upload
       if (!url && b64DataUrl) {
         try {
           const cloudFd = new FormData();
@@ -363,7 +347,7 @@ export default function AdminProductsPage() {
 
       if (url) {
         setFormData(prev => ({ ...prev, videoUrl: url }));
-        showToast('Product video uploaded successfully to Cloudinary!', 'success');
+        showToast('Product video uploaded successfully!', 'success');
       } else {
         showToast('Failed to upload video to Cloudinary', 'error');
       }
@@ -395,7 +379,6 @@ export default function AdminProductsPage() {
     }));
   };
 
-  // Dynamic Variant Handlers
   const handleAddVariant = () => {
     setFormData(prev => ({
       ...prev,
@@ -421,7 +404,6 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Format Cloudinary images for MongoDB (primary image first)
       const validImages = (formData.images || [])
         .filter(img => img.url && typeof img.url === 'string' && img.url.trim() !== '')
         .sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0))
@@ -433,7 +415,6 @@ export default function AdminProductsPage() {
         ingredients: typeof formData.ingredients === 'string' 
           ? formData.ingredients.split(',').map(s => s.trim()).filter(Boolean)
           : formData.ingredients,
-        // Ensure price is numeric
         price: Number(formData.price),
         compareAtPrice: Number(formData.compareAtPrice),
         stock: Number(formData.stock)
@@ -442,12 +423,12 @@ export default function AdminProductsPage() {
       if (editingId) {
         const res = await adminService.updateProduct(editingId, payload);
         if (res.success) {
-          showToast('Product updated successfully with Cloudinary images', 'success');
+          showToast('Product updated successfully', 'success');
         }
       } else {
         const res = await adminService.createProduct(payload);
         if (res.success) {
-          showToast('Product created successfully with Cloudinary images', 'success');
+          showToast('Product created successfully', 'success');
         }
       }
       setShowModal(false);
@@ -472,17 +453,20 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 rounded-2xl p-6">
+      {/* Top Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-cream border border-subtle p-6 shadow-xs">
         <div>
-          <h2 className="text-xl font-bold text-white">MILIVA Product Catalogue</h2>
-          <p className="text-neutral-400 text-sm mt-1">Manage single items, multiple product images, and size variants</p>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-500 block mb-1">
+            Catalogue Operations
+          </span>
+          <h2 className="text-2xl font-light text-neutral-900 font-editorial">MILIVA Product Master</h2>
+          <p className="text-xs text-neutral-600 mt-1">Manage single items, multi-image galleries, and size variants matrix.</p>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="flex items-center space-x-2 bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-emerald-500/10"
+          className="flex items-center space-x-2 bg-neutral-900 hover:bg-black text-white font-bold px-4 py-2.5 text-xs uppercase tracking-wider transition-colors shadow-xs"
         >
-          <FiPlus className="w-5 h-5" />
+          <FiPlus className="w-4 h-4" />
           <span>Add New Product</span>
         </button>
       </div>
@@ -490,13 +474,13 @@ export default function AdminProductsPage() {
       {/* Product List */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <FiRefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
+          <FiRefreshCw className="w-7 h-7 text-neutral-900 animate-spin" />
         </div>
       ) : products.length === 0 ? (
-        <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-12 text-center">
-          <FiTag className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-white">No products found</h3>
-          <p className="text-neutral-400 text-sm mt-1">Click "Add New Product" to start building your MILIVA catalogue.</p>
+        <div className="bg-white border border-subtle p-12 text-center shadow-xs">
+          <FiTag className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
+          <h3 className="text-lg font-light text-neutral-900 font-editorial">No products found</h3>
+          <p className="text-xs text-neutral-500 mt-1">Click "Add New Product" to start building your MILIVA catalogue.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
@@ -510,80 +494,78 @@ export default function AdminProductsPage() {
             return (
               <div 
                 key={prod._id}
-                className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 hover:border-neutral-700 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+                className="bg-white border border-subtle p-5 hover:border-neutral-400 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xs"
               >
-                {/* Left: Thumbnail & Details */}
+                {/* Left: Image & Info */}
                 <div className="flex items-start sm:items-center space-x-4 min-w-0">
-                  <div className="relative group">
+                  <div className="relative shrink-0">
                     <img 
                       src={primaryImg} 
                       alt={prod.name}
-                      className="w-20 h-20 rounded-xl object-contain bg-neutral-950 p-2 border border-neutral-800"
+                      className="w-20 h-20 object-contain bg-cream p-2 border border-subtle"
                     />
-                    <span className="absolute bottom-1 right-1 bg-neutral-900/90 text-emerald-400 text-[10px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
+                    <span className="absolute bottom-1 right-1 bg-neutral-900 text-white text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider">
                       {imagesCount} {imagesCount === 1 ? 'img' : 'imgs'}
                     </span>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 uppercase tracking-wider border border-emerald-500/30">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-neutral-100 border border-neutral-300 text-neutral-800">
                         {prod.productType || 'Cleanser'}
                       </span>
                       {prod.isBestSeller && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-900">
                           Best Seller
                         </span>
                       )}
                       {prod.videoUrl && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/30 flex items-center">
-                          <FiVideo className="w-3 h-3 mr-1" /> Video Included
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-900 flex items-center gap-1">
+                          <FiVideo className="w-3 h-3" /> Video
                         </span>
                       )}
                     </div>
-                    <h3 className="text-base font-bold text-white">{prod.name}</h3>
-                    <p className="text-xs text-neutral-400 line-clamp-1">{prod.shortDescription}</p>
+                    <h3 className="text-base font-bold text-neutral-900">{prod.name}</h3>
+                    <p className="text-xs text-neutral-500 line-clamp-1">{prod.shortDescription}</p>
 
-                    <div className="flex items-center space-x-4 text-xs text-neutral-300 pt-1">
-                      <span>SKU: <strong className="text-neutral-100 font-mono">{prod.sku}</strong></span>
-                      <span>Category: <strong className="text-neutral-100">{prod.category?.name || 'Skincare'}</strong></span>
-                      <span>Stock: <strong className="text-emerald-400">{prod.stock} units</strong></span>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-neutral-600 pt-1">
+                      <span>SKU: <strong className="text-neutral-900 font-mono">{prod.sku}</strong></span>
+                      <span>Category: <strong className="text-neutral-900">{prod.category?.name || 'Skincare'}</strong></span>
+                      <span>Stock: <strong className="text-emerald-800 font-bold">{prod.stock} units</strong></span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right: Variants Preview & Actions */}
-                <div className="flex items-center space-x-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-neutral-800 pt-4 md:pt-0">
-                  {/* Variants List Pill */}
+                <div className="flex items-center space-x-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-subtle pt-4 md:pt-0">
                   <div className="text-right">
-                    <p className="text-xs font-semibold text-neutral-400">Available Sizes</p>
-                    <div className="flex items-center space-x-1 mt-1 justify-end">
+                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Available Sizes</p>
+                    <div className="flex items-center space-x-1.5 mt-1 justify-end">
                       {prod.variants && prod.variants.length > 0 ? (
                         prod.variants.map((v, i) => (
-                          <span key={i} className="text-xs px-2 py-1 rounded bg-neutral-950 border border-neutral-800 text-neutral-200 font-mono">
+                          <span key={i} className="text-xs px-2 py-1 bg-cream border border-subtle text-neutral-900 font-mono font-bold">
                             {v.size}: ₹{v.price}
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs px-2 py-1 rounded bg-neutral-950 border border-neutral-800 text-neutral-200">
+                        <span className="text-xs px-2 py-1 bg-cream border border-subtle text-neutral-900 font-bold">
                           ₹{prod.price}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleOpenEdit(prod)}
-                      className="p-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-emerald-400 transition-colors border border-neutral-700"
-                      title="Edit Product & Multi-Images"
+                      className="p-2.5 bg-neutral-900 hover:bg-black text-white transition-colors"
+                      title="Edit Product"
                     >
                       <FiEdit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(prod._id)}
-                      className="p-2.5 rounded-xl bg-neutral-800 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors border border-neutral-700"
+                      className="p-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
                       title="Deactivate Product"
                     >
                       <FiTrash2 className="w-4 h-4" />
@@ -598,27 +580,27 @@ export default function AdminProductsPage() {
 
       {/* Add / Edit Product Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white border border-neutral-300 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-neutral-800 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">
-                {editingId ? 'Edit Product & Multi-Image Gallery' : 'Add New Product'}
+            <div className="px-6 py-4 bg-cream border-b border-subtle flex items-center justify-between">
+              <h3 className="text-lg font-light text-neutral-900 font-editorial">
+                {editingId ? 'Edit Product & Media Gallery' : 'Add New Skincare Product'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800"
+                className="p-1.5 text-neutral-500 hover:text-neutral-900"
               >
                 <FiX className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Form Content */}
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 flex-1 text-xs">
               {/* Basic Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
                     Product Name *
                   </label>
                   <input
@@ -626,32 +608,32 @@ export default function AdminProductsPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
                     placeholder="e.g. MILIVA Face Cleanser"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
                     URL Slug
                   </label>
                   <input
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
                     placeholder="e.g. miliva-face-cleanser"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
                     Product Type
                   </label>
                   <select
                     value={formData.productType}
                     onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
                   >
                     <option value="cleanser">Cleanser</option>
                     <option value="serum">Serum</option>
@@ -661,13 +643,13 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
                     Category
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
                   >
                     <option value="">Select Category</option>
                     {categories.map((cat) => (
@@ -679,45 +661,44 @@ export default function AdminProductsPage() {
 
               {/* Descriptions */}
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                  Short Tagline / Description
+                <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
+                  Short Tagline
                 </label>
                 <input
                   type="text"
                   value={formData.shortDescription}
                   onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
-                  placeholder="Gentle daily cleanser with 2% Salicylic Acid for acne-prone skin"
+                  className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
+                  placeholder="Gentle daily cleanser with 2% Salicylic Acid"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
                   Full Detailed Description
                 </label>
                 <textarea
                   rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
-                  placeholder="Comprehensive description of formula benefits, dermatological testing, texture details..."
+                  className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
+                  placeholder="Comprehensive description of formula benefits, ingredients, dermatological testing..."
                 />
               </div>
 
               {/* MULTIPLE IMAGES DIRECT DEVICE UPLOAD TO CLOUDINARY */}
-              <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 space-y-4">
+              <div className="bg-cream border border-subtle p-4 space-y-4">
                 <div>
-                  <h4 className="text-sm font-bold text-white flex items-center">
-                    <FiImage className="w-4 h-4 mr-2 text-emerald-400" />
-                    Product Images (Direct Device Upload to Cloudinary)
+                  <h4 className="text-sm font-bold text-neutral-900 flex items-center font-editorial">
+                    <FiImage className="w-4 h-4 mr-2 text-neutral-700" />
+                    Product Images (Direct Device Upload)
                   </h4>
-                  <p className="text-xs text-neutral-400">
-                    Upload multiple high-res product photos from your local device. Images are uploaded to Cloudinary and saved directly to the database.
+                  <p className="text-[11px] text-neutral-600">
+                    Upload multiple high-res product photos from your local device.
                   </p>
                 </div>
 
-                {/* File Dropzone Input */}
-                <div className="border-2 border-dashed border-neutral-800 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition-colors relative bg-neutral-900/50">
+                <div className="border-2 border-dashed border-neutral-300 bg-white hover:border-neutral-900 p-6 text-center cursor-pointer transition-colors relative">
                   <input
                     type="file"
                     multiple
@@ -726,21 +707,20 @@ export default function AdminProductsPage() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     disabled={uploading}
                   />
-                  <div className="flex flex-col items-center justify-center space-y-2">
+                  <div className="flex flex-col items-center justify-center space-y-1">
                     {uploading ? (
                       <>
-                        <FiRefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
-                        <p className="text-sm font-bold text-emerald-400">Uploading to Cloudinary...</p>
-                        <p className="text-xs text-neutral-400">Uploading device files and storing Cloudinary URLs</p>
+                        <FiRefreshCw className="w-6 h-6 text-neutral-900 animate-spin" />
+                        <p className="text-xs font-bold text-neutral-900">Uploading to Cloudinary...</p>
                       </>
                     ) : (
                       <>
-                        <FiUploadCloud className="w-8 h-8 text-emerald-400" />
-                        <p className="text-sm font-bold text-white">
+                        <FiUploadCloud className="w-6 h-6 text-neutral-700" />
+                        <p className="text-xs font-bold text-neutral-900 uppercase tracking-wider">
                           Click or Drag & Drop Images from Device
                         </p>
-                        <p className="text-xs text-neutral-400">
-                          Select multiple image files (PNG, JPG, WEBP). Images will upload straight to Cloudinary.
+                        <p className="text-[11px] text-neutral-500">
+                          Select multiple files (PNG, JPG, WEBP).
                         </p>
                       </>
                     )}
@@ -748,53 +728,46 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Uploaded Images List */}
-                <div className="space-y-3 pt-2">
-                  <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider block">
-                    Uploaded Product Gallery ({formData.images.filter(i => i.url && i.url !== '/images/cleanser.svg').length} images)
+                <div className="space-y-2 pt-1">
+                  <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                    Product Gallery ({formData.images.filter(i => i.url && i.url !== '/images/cleanser.svg').length} images)
                   </span>
 
                   {formData.images.filter(img => img.url && img.url !== '/images/cleanser.svg').length === 0 ? (
-                    <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl text-center text-xs text-neutral-500">
-                      No images uploaded yet. Select files above from your device.
+                    <div className="p-3 bg-white border border-neutral-200 text-center text-[11px] text-neutral-500 italic">
+                      No images uploaded yet. Select files above.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-2">
                       {formData.images.filter(img => img.url && img.url !== '/images/cleanser.svg').map((img, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 bg-neutral-900 border border-neutral-800 rounded-xl">
-                          {/* Image Preview */}
+                        <div key={idx} className="flex items-center gap-3 p-2.5 bg-white border border-neutral-200">
                           <img
                             src={img.url}
                             alt={img.alt || 'Product Image'}
-                            className="w-14 h-14 rounded-lg object-cover bg-neutral-950 border border-neutral-800 shrink-0"
+                            className="w-12 h-12 object-cover bg-cream border border-neutral-200 shrink-0"
                           />
-
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-block">
-                              Cloudinary Image
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase tracking-wider inline-block">
+                              Cloudinary
                             </span>
-                            <p className="text-xs text-neutral-400 truncate font-mono">{img.url}</p>
+                            <p className="text-[10px] text-neutral-500 truncate font-mono mt-0.5">{img.url}</p>
                           </div>
-
                           <div className="flex items-center space-x-2 shrink-0">
-                            {/* Primary Toggle */}
                             <button
                               type="button"
                               onClick={() => handleSetPrimaryImage(idx)}
-                              className={`text-[11px] px-2.5 py-1.5 rounded-lg font-semibold transition-colors ${
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 border ${
                                 img.isPrimary 
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
-                                  : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                                  ? 'bg-neutral-900 text-white border-neutral-900' 
+                                  : 'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100'
                               }`}
                             >
-                              {img.isPrimary ? 'Primary Image' : 'Set Primary'}
+                              {img.isPrimary ? 'Primary' : 'Set Primary'}
                             </button>
-
-                            {/* Delete Image button */}
                             <button
                               type="button"
                               onClick={() => handleRemoveImage(idx)}
-                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10"
-                              title="Delete Image"
+                              className="p-1 text-rose-600 hover:bg-rose-50"
                             >
                               <FiTrash2 className="w-4 h-4" />
                             </button>
@@ -806,151 +779,77 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* PRODUCT VIDEO DIRECT DEVICE UPLOAD SECTION */}
-              <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 space-y-3">
-                <div>
-                  <h4 className="text-sm font-bold text-white flex items-center">
-                    <FiVideo className="w-4 h-4 mr-2 text-emerald-400" />
-                    Product Demonstration Video (Direct Device Upload to Cloudinary)
-                  </h4>
-                  <p className="text-xs text-neutral-400">
-                    Upload product demonstration video files directly from your computer device system to Cloudinary.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {/* File Dropzone Input for Videos */}
-                  <div className="border-2 border-dashed border-neutral-800 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer transition-colors relative bg-neutral-900/50">
-                    <input
-                      type="file"
-                      accept="video/*,.mp4,.webm,.mov,.avi,.mkv"
-                      onChange={handleDeviceVideoUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      disabled={uploadingVideo}
-                    />
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      {uploadingVideo ? (
-                        <>
-                          <FiRefreshCw className="w-8 h-8 text-emerald-400 animate-spin" />
-                          <p className="text-sm font-bold text-emerald-400">Uploading Video to Cloudinary...</p>
-                          <p className="text-xs text-neutral-400">Storing video file on Cloudinary</p>
-                        </>
-                      ) : (
-                        <>
-                          <FiUploadCloud className="w-8 h-8 text-emerald-400" />
-                          <p className="text-sm font-bold text-white">
-                            Click or Drag &amp; Drop Video File from Device System
-                          </p>
-                          <p className="text-xs text-neutral-400">
-                            Select video file from device (MP4, WEBM, MOV, AVI). Uploads directly to Cloudinary.
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Uploaded Video Preview */}
-                  {formData.videoUrl && (
-                    <div className="p-4 bg-neutral-900 border border-neutral-800 rounded-xl space-y-3">
-                      <div className="flex items-center justify-between text-xs text-neutral-300">
-                        <div>
-                          <span className="font-semibold flex items-center text-emerald-400">
-                            <FiCheckCircle className="w-3.5 h-3.5 mr-1" /> Cloudinary Video Uploaded
-                          </span>
-                          <p className="text-[11px] text-neutral-400 font-mono truncate max-w-md mt-0.5">{formData.videoUrl}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setFormData({ ...formData, videoUrl: '' })}
-                          className="px-3 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded-lg border border-red-500/30 transition-colors"
-                        >
-                          Remove Video
-                        </button>
-                      </div>
-
-                      <div className="aspect-video bg-black rounded-lg overflow-hidden border border-neutral-800 max-h-56">
-                        <video 
-                          src={formData.videoUrl} 
-                          controls 
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* SIZE VARIANTS SECTION */}
-              <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-4 space-y-3">
+              <div className="bg-cream border border-subtle p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-sm font-bold text-white flex items-center">
-                      <FiTag className="w-4 h-4 mr-2 text-emerald-400" />
-                      Size Variants & Pricing Matrix
+                    <h4 className="text-sm font-bold text-neutral-900 flex items-center font-editorial">
+                      <FiTag className="w-4 h-4 mr-2 text-neutral-700" />
+                      Size Variants Matrix
                     </h4>
-                    <p className="text-xs text-neutral-400">Configure prices and inventory per size variant (e.g. 100ml / 200ml)</p>
+                    <p className="text-[11px] text-neutral-600">Configure prices and inventory per size variant</p>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddVariant}
-                    className="flex items-center space-x-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg border border-emerald-500/30 transition-colors"
+                    className="text-xs font-bold text-neutral-900 uppercase tracking-wider bg-white border border-neutral-300 hover:bg-neutral-100 px-3 py-1.5 flex items-center gap-1 shadow-2xs"
                   >
                     <FiPlus className="w-3.5 h-3.5" />
                     <span>Add Size Variant</span>
                   </button>
                 </div>
 
-                <div className="space-y-3 pt-2">
+                <div className="space-y-2 pt-1">
                   {formData.variants.map((v, idx) => (
-                    <div key={idx} className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-neutral-900 border border-neutral-800 rounded-xl items-center">
+                    <div key={idx} className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-white border border-neutral-200 items-center">
                       <div>
-                        <span className="text-[10px] text-neutral-400 font-semibold block uppercase">Size</span>
+                        <span className="text-[9px] text-neutral-500 font-bold block uppercase tracking-wider">Size</span>
                         <input
                           type="text"
                           value={v.size}
                           onChange={(e) => handleVariantChange(idx, 'size', e.target.value)}
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-neutral-300 px-2 py-1 text-xs text-neutral-900"
                           placeholder="100ml"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-neutral-400 font-semibold block uppercase">Price (₹)</span>
+                        <span className="text-[9px] text-neutral-500 font-bold block uppercase tracking-wider">Price (₹)</span>
                         <input
                           type="number"
                           value={v.price}
                           onChange={(e) => handleVariantChange(idx, 'price', Number(e.target.value))}
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-neutral-300 px-2 py-1 text-xs text-neutral-900"
                           placeholder="349"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-neutral-400 font-semibold block uppercase">Compare At (₹)</span>
+                        <span className="text-[9px] text-neutral-500 font-bold block uppercase tracking-wider">Compare At</span>
                         <input
                           type="number"
                           value={v.compareAtPrice}
                           onChange={(e) => handleVariantChange(idx, 'compareAtPrice', Number(e.target.value))}
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-neutral-300 px-2 py-1 text-xs text-neutral-900"
                           placeholder="399"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] text-neutral-400 font-semibold block uppercase">Stock</span>
+                        <span className="text-[9px] text-neutral-500 font-bold block uppercase tracking-wider">Stock</span>
                         <input
                           type="number"
                           value={v.stock}
                           onChange={(e) => handleVariantChange(idx, 'stock', Number(e.target.value))}
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                          className="w-full bg-white border border-neutral-300 px-2 py-1 text-xs text-neutral-900"
                           placeholder="100"
                         />
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="flex-1">
-                          <span className="text-[10px] text-neutral-400 font-semibold block uppercase">SKU</span>
+                          <span className="text-[9px] text-neutral-500 font-bold block uppercase tracking-wider">SKU</span>
                           <input
                             type="text"
                             value={v.sku}
                             onChange={(e) => handleVariantChange(idx, 'sku', e.target.value)}
-                            className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono"
+                            className="w-full bg-white border border-neutral-300 px-2 py-1 text-xs text-neutral-900 font-mono"
                             placeholder="MIL-FC-100"
                           />
                         </div>
@@ -958,7 +857,7 @@ export default function AdminProductsPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveVariant(idx)}
-                            className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 mt-3"
+                            className="p-1 text-rose-600 hover:bg-rose-50 mt-3"
                           >
                             <FiTrash2 className="w-4 h-4" />
                           </button>
@@ -972,26 +871,26 @@ export default function AdminProductsPage() {
               {/* Ingredients & How to Use */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                    Key Ingredients (Comma Separated)
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
+                    Key Ingredients
                   </label>
                   <input
                     type="text"
                     value={formData.ingredients}
                     onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
-                    placeholder="2% Salicylic Acid, Niacinamide, Aloe Vera"
+                    className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
+                    placeholder="2% Salicylic Acid, Niacinamide"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-1">
-                    How To Use Instructions
+                  <label className="text-xs font-semibold uppercase tracking-wider text-neutral-700 block mb-1">
+                    How To Use
                   </label>
                   <input
                     type="text"
                     value={formData.howToUse}
                     onChange={(e) => setFormData({ ...formData, howToUse: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500"
+                    className="w-full text-xs px-3 py-2 border border-neutral-300 bg-white focus:outline-none focus:border-neutral-900"
                     placeholder="Lather on wet face twice daily..."
                   />
                 </div>
@@ -999,51 +898,51 @@ export default function AdminProductsPage() {
 
               {/* Toggles */}
               <div className="flex flex-wrap items-center gap-6 pt-2">
-                <label className="flex items-center space-x-2.5 cursor-pointer">
+                <label className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isBestSeller}
                     onChange={(e) => setFormData({ ...formData, isBestSeller: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 rounded"
+                    className="w-4 h-4 accent-neutral-900"
                   />
-                  <span className="text-sm text-neutral-200">Best Seller Badge</span>
+                  <span className="text-xs text-neutral-800 font-medium">Best Seller Badge</span>
                 </label>
 
-                <label className="flex items-center space-x-2.5 cursor-pointer">
+                <label className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isNew}
                     onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 rounded"
+                    className="w-4 h-4 accent-neutral-900"
                   />
-                  <span className="text-sm text-neutral-200">New Arrival Badge</span>
+                  <span className="text-xs text-neutral-800 font-medium">New Arrival Badge</span>
                 </label>
 
-                <label className="flex items-center space-x-2.5 cursor-pointer">
+                <label className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isFeatured}
                     onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                    className="w-4 h-4 accent-emerald-500 rounded"
+                    className="w-4 h-4 accent-neutral-900"
                   />
-                  <span className="text-sm text-neutral-200">Homepage Featured</span>
+                  <span className="text-xs text-neutral-800 font-medium">Homepage Featured</span>
                 </label>
               </div>
 
               {/* Actions Footer */}
-              <div className="pt-4 border-t border-neutral-800 flex items-center justify-end space-x-3">
+              <div className="pt-4 border-t border-subtle flex items-center justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold"
+                  className="px-4 py-2 bg-white border border-neutral-300 text-neutral-700 font-bold uppercase text-xs tracking-wider hover:bg-neutral-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-neutral-950 font-bold shadow-lg shadow-emerald-500/10"
+                  className="px-6 py-2 bg-neutral-900 text-white font-bold uppercase text-xs tracking-wider hover:bg-black shadow-xs"
                 >
-                  {editingId ? 'Save Product Changes' : 'Create Product'}
+                  {editingId ? 'Save Changes' : 'Create Product'}
                 </button>
               </div>
             </form>
